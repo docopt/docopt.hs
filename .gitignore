@@ -1,0 +1,14 @@
+# stupid files
+.DS_Store
+
+# where Cabal puts binaries and config
+dist
+
+# Haskell compiled files
+*.hi
+*.p_hi
+*.p_o
+
+# Sublime Text files
+*.sublime-project
+*.sublime-workspace

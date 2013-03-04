@@ -6,7 +6,7 @@ import Data.Char (isSpace)
 import           Data.Map (Map)
 import qualified Data.Map as M
 
-import Data.List (intercalate)
+import Data.List (intercalate, nub)
 import System.Environment (getArgs)
 
 
@@ -242,58 +242,57 @@ pDocopt = do
 type ParsedArguments = Map Expectation [String]
 type Options = (OptSynonymsDefaults, ParsedArguments)
 
-getOptions :: DocoptParser -> [String] -> Either ParseError Options
-getOptions dop rawargs = let (expct, syndef) = dop
-                             delim = "«»"
-                             p = buildOptParser delim expct
-                         in runParser p (syndef, M.empty) "" (delim `intercalate` rawargs)
-
 -- | The meat and potatoes.
 buildOptParser :: String ->
                   -- ^ an obscure delimiter with which to intercalate the args list
-                  Expectation -> 
+                  DocoptParser -> 
                   -- ^ the expected form of the options 
                   CharParser Options Options
                   -- ^ a CharParser with which a ParsedArguments (k,v) list can be built
-buildOptParser delim (Sequence exs)      = foldl1 f ps 
-                                           where ps = (buildOptParser delim) `map` exs
-                                                 f = \p1 p2 -> p1 >> string delim >> p2
-buildOptParser delim (OneOf exs)         = choice $ (buildOptParser delim) `map` exs
-buildOptParser delim (Optional ex)       = do optional $ try (buildOptParser delim ex) 
-                                              getState
-buildOptParser delim (Repeated ex)       = do many1 $ buildOptParser delim ex
-                                              getState
-buildOptParser delim e@(ShortOption c)   = do (char '-' >> char c)
-                                              optional (char '=') <|> optional (string delim)
-                                              val <- many (notFollowedBy (string delim) >> anyChar)
-                                              updateState $ withEachSynonym e $
-                                                            \pa syn -> saveOccurrence syn val pa
-                                              getState
-buildOptParser delim e@(LongOption name) = do (string "--" >> string name)
-                                              optional (char '=') <|> optional (string delim)
-                                              val <- many (notFollowedBy (string delim) >> anyChar)
-                                              updateState $ withEachSynonym e $
-                                                            \pa syn -> saveOccurrence syn val pa
-                                              getState
-buildOptParser delim (AnyOption)         = undefined
-buildOptParser delim e@(Argument name)   = do val <- many1 (notFollowedBy (string delim) >> anyChar)
-                                              updateState $ updateParsedArgs $ saveOccurrence e val
-                                              getState
-buildOptParser delim e@(Command name)    = do string name
-                                              updateState $ updateParsedArgs $ assertPresent e
-                                              getState
+buildOptParser delim dop@((Sequence exs),      syndef) = foldl1 (andThen) ps 
+                                                         where inner_dops = (\ex -> (ex, syndef)) `map` exs
+                                                               ps = (buildOptParser delim) `map` inner_dops
+                                                               andThen = \p1 p2 -> p1 >> string delim >> p2
+buildOptParser delim dop@((OneOf exs),         syndef) = choice $ (buildOptParser delim) `map` inner_dops
+                                                         where inner_dops = (\ex -> (ex, syndef)) `map` exs
+buildOptParser delim dop@((Optional ex),       syndef) = do optional $ try (buildOptParser delim dop) 
+                                                            getState
+buildOptParser delim dop@((Repeated ex),       syndef) = do many1 $ buildOptParser delim dop
+                                                            getState
+buildOptParser delim dop@(e@(ShortOption c),   syndef) = do (char '-' >> char c)
+                                                            optional (char '=') <|> optional (string delim)
+                                                            val <- many (notFollowedBy (string delim) >> anyChar)
+                                                            updateState $ withEachSynonym e $
+                                                                          \pa syn -> saveOccurrence syn val pa
+                                                            getState
+buildOptParser delim dop@(e@(LongOption name), syndef) = do (string "--" >> string name)
+                                                            optional (char '=') <|> optional (string delim)
+                                                            val <- manyTill anyChar (try (string delim)) -- many (notFollowedBy (string delim) >> anyChar)
+                                                            updateState $ withEachSynonym e $
+                                                                          \pa syn -> saveOccurrence syn val pa
+                                                            getState
+buildOptParser delim dop@((AnyOption),         syndef) = let synlists = nub . map fst $ M.elems syndef
+                                                             parseOneOf syns = choice $ (\ex -> buildOptParser delim (ex, syndef)) `map` syns
+                                                             synparsers = parseOneOf `map` synlists
+                                                         in (foldl1 (>>)) . (map try) $ synparsers
+buildOptParser delim dop@(e@(Argument name),   syndef) = do val <- many1 (notFollowedBy (string delim) >> anyChar)
+                                                            updateState $ updateParsedArgs $ saveOccurrence e val
+                                                            getState
+buildOptParser delim dop@(e@(Command name),    syndef) = do string name
+                                                            updateState $ updateParsedArgs $ assertPresent e
+                                                            getState
 
 updateParsedArgs :: (ParsedArguments -> ParsedArguments) -> Options -> Options
 updateParsedArgs f (syndef, pa) = (syndef, f pa)
 
 saveOccurrence :: Expectation -> String -> ParsedArguments -> ParsedArguments
 saveOccurrence e val pa = M.insertWith f e [val] pa
-    where f newval oldval = newval ++ oldval
+    where f (newval:[]) oldval@("":vs) = newval : vs
+          f  newval     oldval         = newval ++ oldval
 
 assertPresent :: Expectation -> ParsedArguments -> ParsedArguments
 assertPresent e pa = M.insertWith f e [""] pa
     where f newval oldval = oldval 
-    -- TODO make this more robust, don't insert multiple empty strings
 
 withEachSynonym :: Expectation -> 
                    (ParsedArguments -> Expectation -> ParsedArguments) -> 
@@ -302,3 +301,67 @@ withEachSynonym :: Expectation ->
 withEachSynonym ex savef o = let (syndef, pa) = o
                                  syns = fst $ M.findWithDefault ([], Nothing) ex syndef
                              in (syndef, foldl savef pa syns)
+
+
+getOptions :: DocoptParser -> [String] -> Either ParseError Options
+getOptions dop rawargs = let (expct, syndef) = dop
+                             delim = "«»"
+                             p = buildOptParser delim dop
+                         in runParser p (syndef, M.empty) "" (delim `intercalate` rawargs)
+
+-- * Public API
+
+-- ** Main option parsing entry points
+
+optionsWithUsageFile :: FilePath -> IO Options
+optionsWithUsageFile path = do usageStr <- readFile path
+                               rawargs <- getArgs
+                               case runParser pDocopt M.empty path usageStr of
+                                   Left err -> fail usageStr
+                                   Right dop -> case getOptions dop rawargs of
+                                       Left err         -> fail usageStr
+                                       Right parsedOpts -> return parsedOpts
+
+optionsWithUsageFileDebug :: FilePath -> IO Options
+optionsWithUsageFileDebug path = do usageStr <- readFile path
+                                    rawargs <- getArgs
+                                    case runParser pDocopt M.empty path usageStr of
+                                        Left err  -> fail $ show err
+                                        Right dop -> case getOptions dop rawargs of
+                                            Left err         -> fail $ show err
+                                            Right parsedOpts -> return parsedOpts
+
+-- ** Option lookup methods
+
+isPresent :: Options -> Expectation -> Bool
+isPresent opts expct = let (_, pargs) = opts
+                       in case expct `M.lookup` pargs of
+                              Just _ -> True
+                              Nothing -> False
+
+notPresent :: Options -> Expectation -> Bool
+notPresent o e = not $ isPresent o e
+
+getArg :: Options -> Expectation -> Maybe String
+getArg opts expct = let (syndef, pargs) = opts
+                    in case expct `M.lookup` pargs of
+                          Just vals -> Just $ head vals
+                          Nothing -> (expct `M.lookup` syndef) >>= snd
+
+getFirstArg :: Options -> Expectation -> Maybe String
+getFirstArg opts expct = let (syndef, pargs) = opts
+                         in case expct `M.lookup` pargs of
+                              Just vals -> Just $ last vals
+                              Nothing -> (expct `M.lookup` syndef) >>= snd
+
+getAllArgs :: Options -> Expectation -> [String]
+getAllArgs opts expct = let (syndef, pargs) = opts
+                        in case expct `M.lookup` pargs of
+                             Just vals -> vals
+                             Nothing -> case (expct `M.lookup` syndef) >>= snd of
+                               Just def -> [def]
+                               Nothing -> []
+
+getDefaultArg :: Options -> Expectation -> Maybe String
+getDefaultArg opts expct = let (syndef, _) = opts
+                           in (expct `M.lookup` syndef) >>= snd

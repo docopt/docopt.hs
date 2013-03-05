@@ -227,12 +227,12 @@ pOptDescriptions = do
 
 -- * Docopt Types, Parser
 
-type DocoptParser = (Expectation, OptSynonymsDefaults)
+type Docopt = (Expectation, OptSynonymsDefaults)
 
 -- | Main usage parser: parses all of the usage lines into an Exception,
 --   and all of the option descriptions along with any accompanying 
 --   defaults, and returns both in a tuple
-pDocopt :: CharParser OptSynonymsDefaults DocoptParser
+pDocopt :: CharParser OptSynonymsDefaults Docopt
 pDocopt = do
     expct <- pUsagePatterns
     optSynsDefs <- pOptDescriptions
@@ -245,7 +245,7 @@ type Options = (OptSynonymsDefaults, ParsedArguments)
 -- | The meat and potatoes.
 buildOptParser :: String ->
                   -- ^ an obscure delimiter with which to intercalate the args list
-                  DocoptParser -> 
+                  Docopt -> 
                   -- ^ the expected form of the options 
                   CharParser Options Options
                   -- ^ a CharParser with which a ParsedArguments (k,v) list can be built
@@ -303,7 +303,7 @@ withEachSynonym ex savef o = let (syndef, pa) = o
                              in (syndef, foldl savef pa syns)
 
 
-getOptions :: DocoptParser -> [String] -> Either ParseError Options
+getOptions :: Docopt -> [String] -> Either ParseError Options
 getOptions dop rawargs = let (expct, syndef) = dop
                              delim = "«»"
                              p = buildOptParser delim dop

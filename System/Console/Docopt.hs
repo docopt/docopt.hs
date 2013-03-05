@@ -1,6 +1,10 @@
-module Docopt where
+module System.Console.Docopt 
 
-import ApplicativeParsec
+  ( 
+  )
+  where
+
+import System.Console.Docopt.ApplicativeParsec
 import Data.Char (isSpace)
 
 import           Data.Map (Map)
@@ -307,7 +311,7 @@ getOptions :: Docopt -> [String] -> Either ParseError Options
 getOptions dop rawargs = let (expct, syndef) = dop
                              delim = "«»"
                              p = buildOptParser delim dop
-                         in runParser p (syndef, M.empty) "" (delim `intercalate` rawargs)
+                         in runParser p (syndef, M.empty) "arguments" (delim `intercalate` rawargs)
 
 -- * Public API
 

@@ -1,8 +1,4 @@
 module System.Console.Docopt.Public 
-  (
-    -- export everything local
-    module System.Console.Docopt.Public,
-  )
   where
 
 import System.Environment (getArgs)

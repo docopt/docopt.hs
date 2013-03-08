@@ -20,7 +20,12 @@ library
   exposed-modules:     System.Console.Docopt
   
   other-modules:       System.Console.Docopt.ApplicativeParsec
-  
+                       System.Console.Docopt.ParseUtils
+                       System.Console.Docopt.Types
+                       System.Console.Docopt.UsageParse
+                       System.Console.Docopt.OptParse
+                       System.Console.Docopt.Public
+
   build-depends:       base == 4.5.*,
                        parsec == 3.1.*,
                        containers

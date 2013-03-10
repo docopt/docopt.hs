@@ -71,9 +71,6 @@ pExp = inlineSpaces >> repeatable value
                <|> Argument <$> pArgument
                <|> Command <$> pCommand
 
-parseDocopt :: String -> Either ParseError Expectation
-parseDocopt = parse pLine ""
-
 
 -- * Usage Pattern Parsers
 

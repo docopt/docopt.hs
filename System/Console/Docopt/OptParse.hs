@@ -12,40 +12,44 @@ buildOptParser :: String ->
                   -- ^ an obscure delimiter with which to intercalate the args list
                   Docopt -> 
                   -- ^ the expected form of the options 
-                  CharParser Options Options
+                  CharParser Options ()
                   -- ^ a CharParser with which a ParsedArguments (k,v) list can be built
 buildOptParser delim dop@((Sequence exs),      syndef) = foldl1 (andThen) ps 
                                                          where inner_dops = (\ex -> (ex, syndef)) `map` exs
                                                                ps = (buildOptParser delim) `map` inner_dops
-                                                               andThen = \p1 p2 -> p1 >> string delim >> p2
-buildOptParser delim dop@((OneOf exs),         syndef) = choice $ (buildOptParser delim) `map` inner_dops
+                                                               andThen = \p1 p2 -> p1 >> optional (try (string delim)) >> p2
+buildOptParser delim dop@((OneOf exs),         syndef) = choice $ makeParser `map` inner_dops
                                                          where inner_dops = (\ex -> (ex, syndef)) `map` exs
-buildOptParser delim dop@((Optional ex),       syndef) = do optional $ try (buildOptParser delim dop) 
-                                                            getState
-buildOptParser delim dop@((Repeated ex),       syndef) = do many1 $ buildOptParser delim dop
-                                                            getState
+                                                               makeParser = \opts -> try $ buildOptParser delim opts
+buildOptParser delim dop@((Optional ex),       syndef) = optional $ try (buildOptParser delim (ex, syndef)) 
+buildOptParser delim dop@((Repeated ex),       syndef) = do many1 $ buildOptParser delim (ex, syndef) >> optional (try (string delim))
+                                                            return ()
 buildOptParser delim dop@(e@(ShortOption c),   syndef) = do (char '-' >> char c)
-                                                            optional (char '=') <|> optional (string delim)
-                                                            val <- many (notFollowedBy (string delim) >> anyChar)
+                                                            val <- try $ do 
+                                                              (optional (char '=')) <|> (optional (string delim))
+                                                              many (notFollowedBy (string delim) >> anyChar)
                                                             updateState $ withEachSynonym e $
                                                                           \pa syn -> saveOccurrence syn val pa
-                                                            getState
 buildOptParser delim dop@(e@(LongOption name), syndef) = do (string "--" >> string name)
-                                                            optional (char '=') <|> optional (string delim)
-                                                            val <- manyTill anyChar (try (string delim)) -- many (notFollowedBy (string delim) >> anyChar)
+                                                            val <- try $ do 
+                                                              optional $ string "=" <|> string delim
+                                                              many (notFollowedBy (string delim) >> anyChar)
                                                             updateState $ withEachSynonym e $
                                                                           \pa syn -> saveOccurrence syn val pa
-                                                            getState
+                                                         <?> "--"++name
 buildOptParser delim dop@((AnyOption),         syndef) = let synlists = nub . map fst $ M.elems syndef
-                                                             parseOneOf syns = choice $ (\ex -> buildOptParser delim (ex, syndef)) `map` syns
+                                                             parseOneOf syns = choice $ (\ex -> try $ buildOptParser delim (ex, syndef)) `map` syns
                                                              synparsers = parseOneOf `map` synlists
-                                                         in (foldl1 (>>)) . (map try) $ synparsers
-buildOptParser delim dop@(e@(Argument name),   syndef) = do val <- many1 (notFollowedBy (string delim) >> anyChar)
+                                                         in (foldl1 (<|>)) . (map try) $ synparsers
+buildOptParser delim dop@(e@(Argument name),   syndef) = do val <- try $ many1 (notFollowedBy (string delim) >> anyChar)
                                                             updateState $ updateParsedArgs $ saveOccurrence e val
-                                                            getState
 buildOptParser delim dop@(e@(Command name),    syndef) = do string name
                                                             updateState $ updateParsedArgs $ assertPresent e
-                                                            getState
+
+-- | converts a parser to return its user-state
+--   instead of its return value
+returnState :: CharParser u a -> CharParser u u
+returnState p = p >> getState
 
 updateParsedArgs :: (ParsedArguments -> ParsedArguments) -> Options -> Options
 updateParsedArgs f (syndef, pa) = (syndef, f pa)
@@ -71,6 +75,6 @@ withEachSynonym ex savef o = let (syndef, pa) = o
 getOptions :: Docopt -> [String] -> Either ParseError Options
 getOptions dop rawargs = let (expct, syndef) = dop
                              delim = "«»"
-                             p = buildOptParser delim dop
+                             p = returnState $ buildOptParser delim dop
                          in runParser p (syndef, M.empty) "arguments" (delim `intercalate` rawargs)
 

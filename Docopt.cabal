@@ -1,7 +1,7 @@
 name:                Docopt
 version:             0.1.0.0
-synopsis:            A command-line interface description language and parser
--- description:         
+synopsis:            A command-line interface description language and parser that will make you smile
+-- description:         (TODO)
 
 license:             MIT
 license-file:        LICENSE.txt

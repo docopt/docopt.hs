@@ -2,7 +2,9 @@
 
 ### A Haskell port of python's [docopt](http://docopt.org).
 
-TODO: 
+----------
+
+#### TODO: 
 
 - + Split the monolithic Docopt.hs into private submodules
 - ± Test the public API

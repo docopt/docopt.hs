@@ -36,18 +36,22 @@ main = do
 			putStrLn $ "  --speed=" ++ show speed
 	when (opts `isPresent` (command "mine")) $ do
 		putStrLn "Command 'mine'"
-		x <- opts `getArg` (argument "x")
-		y <- opts `getArg` (argument "y")
-		isMoored <- opts `isPresentM` (longOption "moored")
-		isDrifting <- opts `isPresentM` (longOption "drifting")
-		when (opts `isPresent` (command "set")) $ do
-			putStrLn "  Command 'set'"
-		when (opts `isPresent` (command "remove")) $ do
-			putStrLn "  Command 'remove'"
-		putStrLn $ "  <x> " ++ show x		
-		putStrLn $ "  <y> " ++ show y
-		putStrLn $ if isMoored then "  --moored" else "  (not moored)"
-		putStrLn $ if isDrifting then "  --drifting" else "  (not drifting)"
+		when (or $ map (opts `isPresent`) [command "set", command "remove"]) $ do
+			when (opts `isPresent` (command "set")) $ do
+				putStrLn "  Command 'set'"
+			when (opts `isPresent` (command "remove")) $ do
+				putStrLn "  Command 'remove'"
+			x <- opts `getArg` (argument "x")
+			y <- opts `getArg` (argument "y")
+			putStrLn $ "  <x> " ++ show x		
+			putStrLn $ "  <y> " ++ show y
+		when (opts `isPresent` (command "list")) $ do
+			when (opts `isPresent` (command "list")) $ do
+				putStrLn "  Command 'list'"
+		let moored = opts `getArgWithDefault` "" $ (longOption "moored")
+		    drifting = opts `getArgWithDefault` "" $ (longOption "drifting")
+		putStrLn $ if not (null moored) then "  --moored "++moored else "  (not moored)"
+		putStrLn $ if not (null drifting) then "  --drifting "++drifting else "  (not drifting)"			
 	when (opts `isPresent` (longOption "version")) $ do
 		putStrLn "Naval Fate v0.0.0.0.0.1.0"
 	when (opts `isPresent` (longOption "help")) $ do

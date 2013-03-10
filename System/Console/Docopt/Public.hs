@@ -14,6 +14,8 @@ import System.Exit
 
 import Data.Map as M
 
+import Control.Applicative
+
 import System.Console.Docopt.ParseUtils
 import System.Console.Docopt.Types
 import System.Console.Docopt.UsageParse (pDocopt)
@@ -80,6 +82,10 @@ getFirstArg opts expct = let (syndef, pargs) = opts
                                 val -> return val
                               _ -> defaultVal
 
+getArgWithDefault :: Options -> String -> Expectation -> String
+getArgWithDefault opts def expct = case opts `getArg` expct of
+                                      Just val -> val
+                                      Nothing -> def
 
 getAllArgs :: Options -> Expectation -> [String]
 getAllArgs opts expct = let (syndef, pargs) = opts

@@ -1,5 +1,6 @@
 import Control.Monad (when, unless)
 import System.Environment (getArgs)
+import System.Exit 
 import System.Console.Docopt
 
 main = do 
@@ -7,10 +8,9 @@ main = do
 	--print args
 
 	opts <- optionsWithUsageFile "naval_fate.USAGE.txt"
-	--putStrLn "\nfinished parsing opts:\n"
 
-	print opts
-	putStrLn ""
+	--print opts
+	--putStrLn ""
 
 	when (opts `isPresent` (command "ship")) $ do
 		putStrLn "Command 'ship'"
@@ -52,6 +52,7 @@ main = do
 			putStrLn "  --moored"
 		when (opts `isPresent` (longOption "drifting")) $ do
 			putStrLn "  --drifting"
+		exitSuccess
 	when (opts `isPresent` (longOption "version")) $ do
 		putStrLn "Naval Fate v0.0.0.0.0.1.0"
 	when (opts `isPresent` (longOption "help")) $ do

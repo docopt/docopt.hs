@@ -11,8 +11,10 @@
 	- + fix [options] parsing of any defined option
 	- + sort out a way to differentiate boolean flags from options with expected values
 	- + parse consecutive flags/options
-	- parse stacked short flags/options (ie "-aBc")
-	- parse synonymous flags/options whenever one is specified
+	- + parse stacked short flags/options (ie "-aBc")
+		- + in usage patterns
+		- + in given command-line arguments
+	- + parse synonymous flags/options whenever one is specified
 	- make the public API dead simple
 - ± Sort out the .cabal config
 - Write a helpful README

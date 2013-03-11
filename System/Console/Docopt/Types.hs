@@ -55,6 +55,18 @@ type SynDefMap = Map Expectation SynonymDefault
 --   Used to build the actual command-line arg parser.
 type Docopt = (Expectation, SynDefMap)
 
+-- | 
+data OptParserState = OptParserState { synDefMap :: SynDefMap
+                                     , parsedArgs :: ParsedArguments
+                                     , inShortOptStack :: Bool
+                                     } deriving (Show)
+
+fromSynDefMap :: SynDefMap -> OptParserState
+fromSynDefMap m = OptParserState {synDefMap=m, parsedArgs=M.empty, inShortOptStack=False}
+
+toOptions :: OptParserState -> Options
+toOptions st = (synDefMap st, parsedArgs st)
+
 -- | Maps each Expectation to all of the valued parsed from the command line
 --   (in order of last to first, if multiple values encountered)
 type ParsedArguments = Map Expectation [String]

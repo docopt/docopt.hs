@@ -7,7 +7,7 @@ main = do
 	--args <- getArgs
 	--print args
 
-	opts <- optionsWithUsageFile "naval_fate.USAGE.txt"
+	opts <- optionsWithUsageFileDebug "naval_fate.USAGE.txt"
 
 	--print opts
 	--putStrLn ""
@@ -46,8 +46,9 @@ main = do
 			putStrLn $ "  <x> " ++ show x		
 			putStrLn $ "  <y> " ++ show y
 		when (opts `isPresent` (command "list")) $ do
-			when (opts `isPresent` (command "list")) $ do
-				putStrLn "  Command 'list'"
+			putStrLn "  Command 'list'"
+		when (opts `isPresent` (command "show")) $ do
+			putStrLn "  Command 'show'"
 		when (opts `isPresent` (longOption "moored")) $ do
 			putStrLn "  --moored"
 		when (opts `isPresent` (longOption "drifting")) $ do

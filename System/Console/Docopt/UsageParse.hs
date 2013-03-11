@@ -39,6 +39,15 @@ pShortOption = try $ do char '-'
                         expectsVal <- option False pOptionArgument
                         return (ch, expectsVal)
 
+pStackedShortOption :: CharParser u Expectation
+pStackedShortOption = try $ do 
+    char '-'
+    chars <- many letter
+    case length chars of
+      0 -> fail ""
+      1 -> return $ ShortOption $ head chars
+      _ -> return $ Repeated . OneOf $ map ShortOption chars
+
 pLongOption :: CharParser u (Name, Bool)
 pLongOption = try $ do string "--" 
                        name <- many1 $ oneOf alphanumerics
@@ -71,7 +80,7 @@ pExp :: CharParser u Expectation
 pExp = inlineSpaces >> repeatable value
      where value = Optional . flatOneOf <$> pOptGroup
                <|> flatOneOf <$> pReqGroup
-               <|> ShortOption . fst <$> pShortOption
+               <|> pStackedShortOption
                <|> LongOption . fst <$> pLongOption
                <|> return (Repeated AnyOption) <* pAnyOption
                <|> Argument <$> pArgument
@@ -157,6 +166,25 @@ pDocopt :: CharParser SynDefMap Docopt
 pDocopt = do
     expct <- pUsagePatterns
     optSynsDefs <- pOptDescriptions
-    return (expct, optSynsDefs)
+    let expct' = expectSynonyms optSynsDefs expct
+    return (expct', optSynsDefs)
 
 
+-- ** Expectation restructuring
+
+expectSynonyms :: SynDefMap -> Expectation -> Expectation
+expectSynonyms sdm (Sequence exs)    = Sequence $ map (expectSynonyms sdm) exs
+expectSynonyms sdm (OneOf exs)       = OneOf $ map (expectSynonyms sdm) exs
+expectSynonyms sdm (Optional ex)     = Optional $ expectSynonyms sdm ex
+expectSynonyms sdm (Repeated ex)     = Repeated $ expectSynonyms sdm ex
+expectSynonyms sdm e@(Argument ex)   = e
+expectSynonyms sdm e@(Command ex)    = e
+expectSynonyms sdm e@(AnyOption)     = e
+expectSynonyms sdm e@(ShortOption c) = 
+    case synonyms <$> e `M.lookup` sdm of
+      Just syns -> OneOf syns
+      Nothing -> e
+expectSynonyms sdm e@(LongOption a)  = 
+    case synonyms <$> e `M.lookup` sdm of
+      Just syns -> OneOf syns
+      Nothing -> e

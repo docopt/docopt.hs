@@ -34,14 +34,32 @@ data Expectation = Sequence [Expectation]   -- firstarg secondarg thirdarg
 --    print $ runParser pDocopt M.empty "" contents
 
 
--- | A Map from key expectation (long or short option) to value
---   of a tuple whose first element is a list of synonymous expectations
---   (e.g. -h, --help) and whose second element is Maybe a default value
---   for those synonymous expectations
-type OptSynonymsDefaults = Map Expectation ([Expectation], (Maybe String))
+-- | Used when parsing through the available option descriptions.
+--   Holds a list of synonymous options, Maybe a default value (if specified),
+--   and a Bool that indicates whether this option is a flag (--flag) 
+--   or an option that needs an argument (--opt=arg)
+data SynonymDefault = SynonymDefault 
+                      { synonyms :: [Expectation]
+                      , defaultVal :: Maybe String
+                      , expectsVal :: Bool 
+                      } deriving (Show, Eq, Ord)
 
-type Docopt = (Expectation, OptSynonymsDefaults)
+fromSynList :: [Expectation] -> SynonymDefault
+fromSynList es = SynonymDefault es Nothing False
 
+-- | Maps each available option to a SynonymDefault entry
+--   (each synonymous option gets its own separate entry, for easy lookup)
+type SynDefMap = Map Expectation SynonymDefault
+
+-- | Contains all the relevant information parsed out of a usage string.
+--   Used to build the actual command-line arg parser.
+type Docopt = (Expectation, SynDefMap)
+
+-- | Maps each Expectation to all of the valued parsed from the command line
+--   (in order of last to first, if multiple values encountered)
 type ParsedArguments = Map Expectation [String]
-type Options = (OptSynonymsDefaults, ParsedArguments)
+
+-- | The SynDefMap and ParsedArguments are all that need to be kept around
+--   and given to the user, for use with all the public lookup methods.
+type Options = (SynDefMap, ParsedArguments)
 

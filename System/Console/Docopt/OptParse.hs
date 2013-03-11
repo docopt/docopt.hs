@@ -25,19 +25,23 @@ buildOptParser delim dop@((Optional ex),       syndef) = optional $ try (buildOp
 buildOptParser delim dop@((Repeated ex),       syndef) = do many1 $ buildOptParser delim (ex, syndef) >> optional (try (string delim))
                                                             return ()
 buildOptParser delim dop@(e@(ShortOption c),   syndef) = do (char '-' >> char c)
-                                                            val <- try $ do 
-                                                              (optional (char '=')) <|> (optional (string delim))
-                                                              many (notFollowedBy (string delim) >> anyChar)
+                                                            val <- if expectsVal $ M.findWithDefault (fromSynList []) e syndef 
+                                                              then try $ do 
+                                                                (optional (char '=')) <|> (optional (string delim))
+                                                                many (notFollowedBy (string delim) >> anyChar)
+                                                              else return ""
                                                             updateState $ withEachSynonym e $
                                                                           \pa syn -> saveOccurrence syn val pa
 buildOptParser delim dop@(e@(LongOption name), syndef) = do (string "--" >> string name)
-                                                            val <- try $ do 
-                                                              optional $ string "=" <|> string delim
-                                                              many (notFollowedBy (string delim) >> anyChar)
+                                                            val <- if expectsVal $ M.findWithDefault (fromSynList []) e syndef 
+                                                              then try $ do 
+                                                                optional $ string "=" <|> string delim
+                                                                many (notFollowedBy (string delim) >> anyChar)
+                                                              else return ""
                                                             updateState $ withEachSynonym e $
                                                                           \pa syn -> saveOccurrence syn val pa
                                                          <?> "--"++name
-buildOptParser delim dop@((AnyOption),         syndef) = let synlists = nub . map fst $ M.elems syndef
+buildOptParser delim dop@((AnyOption),         syndef) = let synlists = nub . map synonyms $ M.elems syndef
                                                              parseOneOf syns = choice $ (\ex -> try $ buildOptParser delim (ex, syndef)) `map` syns
                                                              synparsers = parseOneOf `map` synlists
                                                          in (foldl1 (<|>)) . (map try) $ synparsers
@@ -68,7 +72,7 @@ withEachSynonym :: Expectation ->
                    Options -> 
                    Options
 withEachSynonym ex savef o = let (syndef, pa) = o
-                                 syns = fst $ M.findWithDefault ([], Nothing) ex syndef
+                                 syns = synonyms $ M.findWithDefault (fromSynList []) ex syndef
                              in (syndef, foldl savef pa syns)
 
 

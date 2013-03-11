@@ -33,20 +33,26 @@ pOptGroup = pGroup '[' pExpSeq ']'
 pReqGroup :: CharParser u [Expectation]
 pReqGroup = pGroup '(' pExpSeq ')'
 
-pShortOption :: CharParser u Char
-pShortOption = try (char '-' >> letter) <* optional pOptionArgument
+pShortOption :: CharParser u (Char, Bool)
+pShortOption = try $ do char '-' 
+                        ch <- letter 
+                        expectsVal <- option False pOptionArgument
+                        return (ch, expectsVal)
 
-pLongOption :: CharParser u Name
-pLongOption = try (string "--" >> (many1 $ oneOf alphanumerics)) <* optional pOptionArgument
+pLongOption :: CharParser u (Name, Bool)
+pLongOption = try $ do string "--" 
+                       name <- many1 $ oneOf alphanumerics
+                       expectsVal <- option False pOptionArgument
+                       return (name, expectsVal)
 
 pAnyOption :: CharParser u String
 pAnyOption = try (string "options")
 
-pOptionArgument :: CharParser u ()
-pOptionArgument = try $ do
-    char '=' <|> inlineSpace
-    pArgument
-    return ()
+pOptionArgument :: CharParser u Bool -- True if one is encountered, else False
+pOptionArgument = try $ do char '=' <|> inlineSpace
+                           pArgument <|> many1 (oneOf uppers)
+                           return True
+                  <|> return False
 
 pArgument :: CharParser u String
 pArgument = between (char '<') (char '>') pCommand
@@ -65,8 +71,8 @@ pExp :: CharParser u Expectation
 pExp = inlineSpaces >> repeatable value
      where value = Optional . flatOneOf <$> pOptGroup
                <|> flatOneOf <$> pReqGroup
-               <|> ShortOption <$> pShortOption
-               <|> LongOption <$> pLongOption
+               <|> ShortOption . fst <$> pShortOption
+               <|> LongOption . fst <$> pLongOption
                <|> return (Repeated AnyOption) <* pAnyOption
                <|> Argument <$> pArgument
                <|> Command <$> pCommand
@@ -100,10 +106,14 @@ pUsagePatterns = do
 begOptionLine :: CharParser u String
 begOptionLine = inlineSpaces >> lookAhead (char '-') >> return "-"
 
-pOptSynonyms :: CharParser u [Expectation]
-pOptSynonyms = inlineSpaces >> p `sepEndBy1` (optional (char ',') >> inlineSpace)
-             where p = ShortOption <$> pShortOption
-                     <|> LongOption <$> pLongOption
+pOptSynonyms :: CharParser u ([Expectation], Bool)
+pOptSynonyms = do inlineSpaces 
+                  pairs <- p `sepEndBy1` (optional (char ',') >> inlineSpace)
+                  let expectations = map fst pairs
+                      expectsVal = or $ map snd pairs
+                  return (expectations, expectsVal)
+             where p =   (\(c, ev) -> (ShortOption c, ev)) <$> pShortOption
+                     <|> (\(s, ev) -> (LongOption s, ev)) <$> pLongOption
 
 pDefaultTag :: CharParser u String
 pDefaultTag = do
@@ -119,17 +129,18 @@ pOptDefault = do
     maybeDefault <- optionMaybe pDefaultTag
     return maybeDefault
 
-pOptDescription :: CharParser OptSynonymsDefaults ()
+pOptDescription :: CharParser SynDefMap ()
 pOptDescription = try $ do
-    syns <- pOptSynonyms
+    (syns, expectsVal) <- pOptSynonyms
     def <- pOptDefault
     skipUntil (newline >> begOptionLine)
     updateState $ \synmap -> 
-      let f mp expct = M.insert expct (syns, def) mp
-      in  foldl f synmap syns 
+      let syndef = SynonymDefault {synonyms = syns, defaultVal = def, expectsVal = expectsVal}
+          saveSynDef mp expct = M.insert expct syndef mp
+      in  foldl saveSynDef synmap syns 
     return ()
 
-pOptDescriptions :: CharParser OptSynonymsDefaults OptSynonymsDefaults
+pOptDescriptions :: CharParser SynDefMap SynDefMap
 pOptDescriptions = do
     skipUntil (newline >> begOptionLine)
     newline
@@ -142,7 +153,7 @@ pOptDescriptions = do
 -- | Main usage parser: parses all of the usage lines into an Exception,
 --   and all of the option descriptions along with any accompanying 
 --   defaults, and returns both in a tuple
-pDocopt :: CharParser OptSynonymsDefaults Docopt
+pDocopt :: CharParser SynDefMap Docopt
 pDocopt = do
     expct <- pUsagePatterns
     optSynsDefs <- pOptDescriptions

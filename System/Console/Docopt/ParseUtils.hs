@@ -11,9 +11,10 @@ import Data.Char (isSpace)
 
 -- * Constants
 
-letters = ['a'..'z']++['A'..'Z']
+lowers = ['a'..'z']
+uppers = ['A'..'Z']
+letters = lowers++uppers
 alphanumerics = letters++['0'..'9']++['-','_']
-programNameChars = alphanumerics++"./~"
 
 
 -- * Basic Parsers

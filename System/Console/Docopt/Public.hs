@@ -65,22 +65,28 @@ notPresentM o e = return $ not $ isPresent o e
 
 getArg :: Monad m => Options -> Expectation -> m String
 getArg opts expct = let (syndef, pargs) = opts
+                        failure = fail $ "no argument given: " ++ show expct
                     in case expct `M.lookup` pargs of
                           Just (val@(c:cs):vals) -> return val --ensure non-empty val
                           _ -> case expct `M.lookup` syndef of
-                            Just (_, Just val) -> return val
-                            _ -> fail $ "no argument given: " ++ show expct
+                            Just syndef -> case defaultVal syndef of
+                              Just def -> return def 
+                              Nothing -> failure
+                            _ -> failure
 
 getFirstArg :: Monad m => Options -> Expectation -> m String
 getFirstArg opts expct = let (syndef, pargs) = opts
-                             defaultVal = case expct `M.lookup` syndef of
-                               Just (_, Just val) -> return val
-                               _ -> fail $ "no argument given: " ++ show expct
+                             failure = fail $ "no argument given: " ++ show expct
+                             def = case expct `M.lookup` syndef of
+                               Just syndef -> case defaultVal syndef of
+                                 Just val -> return val
+                                 Nothing -> failure
+                               _ -> failure
                          in case expct `M.lookup` pargs of
                               Just vals@(_:_) -> case last vals of
-                                "" -> defaultVal --if empty string, just use default
+                                "" -> def --if empty string, just use default
                                 val -> return val
-                              _ -> defaultVal
+                              _ -> def
 
 getArgWithDefault :: Options -> String -> Expectation -> String
 getArgWithDefault opts def expct = case opts `getArg` expct of
@@ -91,18 +97,22 @@ getAllArgs :: Options -> Expectation -> [String]
 getAllArgs opts expct = let (syndef, pargs) = opts
                         in case expct `M.lookup` pargs of
                              Just vals -> vals
-                             Nothing -> case (expct `M.lookup` syndef) >>= snd of
+                             Nothing -> case (expct `M.lookup` syndef) >>= defaultVal of
                                Just def -> [def]
                                Nothing -> []
 
 getAllArgsM :: Monad m => Options -> Expectation -> m [String]
 getAllArgsM o e = return $ getAllArgs o e
 
+-- is this lookup function even useful?
 getDefaultArg :: Monad m => Options -> Expectation -> m String
-getDefaultArg opts expct = let (syndef, _) = opts
-                           in case expct `M.lookup` syndef of
-                             Just (_, Just val) -> return val
-                             _ -> fail ""
+getDefaultArg opts expct = let (syndefmap, _) = opts
+                               failure = fail $ "no default argument given: " ++ show expct
+                           in case expct `M.lookup` syndefmap of
+                             Just syndef -> case defaultVal syndef of
+                               Just val -> return val
+                               Nothing -> failure
+                             _ -> failure
 
 
 -- ** Public Expectation constructor functions

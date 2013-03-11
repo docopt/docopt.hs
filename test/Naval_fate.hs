@@ -9,8 +9,8 @@ main = do
 	opts <- optionsWithUsageFile "naval_fate.USAGE.txt"
 	--putStrLn "\nfinished parsing opts:\n"
 
-	--print opts
-	--putStrLn ""
+	print opts
+	putStrLn ""
 
 	when (opts `isPresent` (command "ship")) $ do
 		putStrLn "Command 'ship'"
@@ -48,10 +48,10 @@ main = do
 		when (opts `isPresent` (command "list")) $ do
 			when (opts `isPresent` (command "list")) $ do
 				putStrLn "  Command 'list'"
-		let moored = opts `getArgWithDefault` "" $ (longOption "moored")
-		    drifting = opts `getArgWithDefault` "" $ (longOption "drifting")
-		putStrLn $ if not (null moored) then "  --moored "++moored else "  (not moored)"
-		putStrLn $ if not (null drifting) then "  --drifting "++drifting else "  (not drifting)"			
+		when (opts `isPresent` (longOption "moored")) $ do
+			putStrLn "  --moored"
+		when (opts `isPresent` (longOption "drifting")) $ do
+			putStrLn "  --drifting"
 	when (opts `isPresent` (longOption "version")) $ do
 		putStrLn "Naval Fate v0.0.0.0.0.1.0"
 	when (opts `isPresent` (longOption "help")) $ do

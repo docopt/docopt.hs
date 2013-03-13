@@ -1,13 +1,13 @@
 Docopt.hs
 =========
 
-### A Haskell port of python's [docopt](http://docopt.org).
+A Haskell port of python's [docopt](http://docopt.org).
 
 ----------
 
-Want a command-line interface? Want it to be flexible? Want to stop worrying about how to build the parser you have in mind?
+## Want a command-line interface *without* building a parser?
 
-How about writing your help text first, and using *that* to build your parser!
+How about writing your help text first, and getting a parser for free!
 
 Save your help text to a file (i.e. `USAGE.txt`):
 
@@ -22,27 +22,27 @@ Then, in your `myprog.hs`:
     
 ```haskell
 
-    import Control.Monad (when)
-    import Data.Char (toUpper)
-    import System.Console.Docopt (optionsWithUsageFile, getArg, isPresent)
+import Control.Monad (when)
+import Data.Char (toUpper)
+import System.Console.Docopt (optionsWithUsageFile, getArg, isPresent)
 
-    main = do
-      opts <- optionsWithUsageFile "USAGE.txt"
+main = do
+  opts <- optionsWithUsageFile "USAGE.txt"
 
-      when (opts `isPresent` (command "cat")) $ do
-        file <- opts `getArg` (argument "file")
-        putStr =<< readFile file
+  when (opts `isPresent` (command "cat")) $ do
+    file <- opts `getArg` (argument "file")
+    putStr =<< readFile file
 
-      when (opts `isPresent` (command "echo")) $ do
-        let charTransform = if opts `isPresent` (longOption "caps")
-                              then toUpper
-                              else id
-        string <- opts `getArg` (argument "string")
-        putStrLn $ map charTransform string
+  when (opts `isPresent` (command "echo")) $ do
+    let charTransform = if opts `isPresent` (longOption "caps")
+                          then toUpper
+                          else id
+    string <- opts `getArg` (argument "string")
+    putStrLn $ map charTransform string
 
 ```
 
-That's it! No Template Haskell, no unreadable syntax, no learning yet *another* finicky API. Write the usage patterns you support, and docopt builds the appropriate option parser for you (internally using [`parsec`](http://hackage.haskell.org/package/parsec))if your user invokes your program correctly, you query for the arguments they provided. If the arguments provided do not match a supported usage pattern, you guessed it: docopt automatically prints the help text and exits!
+That's it! No Template Haskell, no unreadable syntax, no learning yet *another* finicky API. Write the usage patterns you support, and docopt builds the appropriate option parser for you (internally using [`parsec`](http://hackage.haskell.org/package/parsec)). If your user invokes your program correctly, you query for the arguments they provided. If the arguments provided do not match a supported usage pattern, you guessed it: docopt automatically prints the help text and exits!
 
 ----------
 
@@ -68,7 +68,7 @@ Docopt only cares about 2 parts of your help text:
   ```
   These begin with `Usage:` (case-insensitive), and end with a blank line. 
 
-- Option descriptions, e.g.: 
+- **Option descriptions**, e.g.: 
 
   ```
       Options:
@@ -82,18 +82,14 @@ Docopt only cares about 2 parts of your help text:
 
   Any line after the usage patterns that begins with a `-` is treated as an option description (though an option's default may be on a different line).
 
-Basics
-------
+Usage Patterns
+--------------
 
-### Usage Patterns
-
-##### Elements
-
-- **`<argument>`**
+- #### `<argument>`
 
   Positional arguments. Constructed via `argument`, i.e. `argument "arg"` matches an `<arg>` element in the help text.
 
-- **`--flag`** or **`--option=<arg>`**
+- #### `--flag` or `--option=<arg>`
 
   Options are typically optional (though this is up to you), and can be either boolean (present/absent), as in `--flag`, or expect a trailing argument, as in `--option=<arg>`. Arguments can be separated from the option name by an `=` or a single space, and can be in `<arg>` form or `ARG` form (though consistency of style is recommended, it is not enforced). 
 
@@ -101,21 +97,19 @@ Basics
 
   You can match a long-style option `--flag` with `longOption "flag"`, and a short-style option `-f` with `shortOption 'f'` The same constructor is used whether the option expects an argument or not.
 
-- **`command`**
+- #### `command`
 
   Anything not recognized as a positional argument or a short or long option is treated as a command (or subcommand, same thing to docopt). A command named `pull` can be matched with `command "pull"`. 
 
-##### Patterns
-
-- `[]` (brackets) e.g. `command [--option]`
+- #### `[]` (brackets) e.g. `command [--option]`
 
   Patterns inside brackets are **optional**.
 
-- **`()`** (parens)
+- #### `()` (parens)
 
   Patterns inside parens are **required** (the same as patterns *not* in `()` are required). Parens are useful if you need to group some elements, either for use with `|` or `...`.
 
-- `|` (pipe) e.g. `command [--quiet | --verbose]`
+- #### `|` (pipe) e.g. `command [--quiet | --verbose]`
 
   A pipe `|` separates mutually elements in a group. A group could be elements inside `[]`, `()`, or the whole usage line. 
 
@@ -128,19 +122,20 @@ Basics
 
   When elements are separated by a pipe, the elements are tried from left to right until one succeeds. At least one of the elements are required unless in an eplicitly optional group surrounded by `[]`.
 
-- `...` (ellipsis) e.g. `command <file>...`
+- #### `...` (ellipsis) e.g. `command <file>...`
 
   An ellipsis can trail any element or group to make it repeatable. Repeatable elements will be accumulated into a list of occurrences.
 
-- **`[options]`** (case sensitive)
+- #### `[options]` (case sensitive)
 
   The string `[options]` is a shortcut to match any options specified in your option descriptions.
 
-- `[-]` and `[--]`
+- #### `[-]` and `[--]`
 
   Single hyphen `-` is used by convention to specify using `stdin` as input instead of reading a file. Double hyphen `--` is typically used to manually separate leading options from trailing positional arguments. Both of these are treated as `command`s, and so are perfectly legal in usage patterns. They are typically optional elements, but can be required if you drop the `[]`. 
 
-### Option descriptions
+Option descriptions
+-------------------
 
 Option descriptions establish:
 - which short and long options are synonymous
@@ -201,7 +196,7 @@ Option descriptions establish:
 
 ----------------
 
-### Types
+## Types
 
 - **`Options`**
 
@@ -213,38 +208,40 @@ Option descriptions establish:
 
   Constructors:
 
-  - `command        ==>  command "command"`
-  - `<argument>     ==>  argument "argument"`
-  - `--flag         ==>  longOption "flag"` 
-  - `--option=ARG   ==>  longOption "option"`
-  - `-c             ==>  shortOption 'c'` 
-  - `-c ARG         ==>  shortOption 'c'`
+  ```
+  command        ==>  command "command"
+  <argument>     ==>  argument "argument"
+  --flag         ==>  longOption "flag"`
+  --option=ARG   ==>  longOption "option"
+  -c             ==>  shortOption 'c'`
+  -c ARG         ==>  shortOption 'c'
+  ```
 
-### Option parsing
+## Option parsing
 
-- `optionsWithUsageFile :: FilePath -> IO Options`
+- **`optionsWithUsageFile :: FilePath -> IO Options`**
 
   Most basic options parser. Give it the path to a file with your help text, and it will read the file, build your option parser, and parse your program's options (via `getArgs`). If successful, you get an `Options`, and if not, it will print your help text and fail (hence `IO`).
 
-- `optionsWithUsageFileDebug :: FilePath -> IO Options`
+- **`optionsWithUsageFileDebug :: FilePath -> IO Options`**
 
   Same as `optionsWithUsageFile`, but prints `ParseError`s if it fails, instead of your help text. Useful if you run into problems parsing options.
 
-### Queries
+## Queries
 
-- `getArg :: Monad m => Options -> Expectation -> m String`
+- **`getArg :: Monad m => Options -> Expectation -> m String`**
 
   ``opts `getArg` exp`` returns the last value of `exp` specified in the arguments, or the default value (if one is specified), or `fail`s.
 
-- `isPresent :: Options -> Expectation -> Bool`
+- **`isPresent :: Options -> Expectation -> Bool`**
 
   ``opts `isPresent` exp`` returns `True` if `exp` was given in the arguments, else `False`. Useful for use with flags.
 
-- `getAllArgs :: Options -> Expectation -> [String]`
+- **`getAllArgs :: Options -> Expectation -> [String]`**
 
   ``opts `getAllArgs` exp`` returns the list of all occurrences of `exp` in the arguments, in order of last to first given. If none given, returns a singleton list of the default value, if specified. Otherwise returns an empty list. Useful for repeatable elements.
 
-- `getArgWithDefault :: Options -> String -> Expectation -> String`
+- **`getArgWithDefault :: Options -> String -> Expectation -> String`**
 
   ``getArgWithDefault opts "default" exp`` returns what `getArg opts exp` returns if it succeeds, or `"default"` if that fails.
 
@@ -256,7 +253,6 @@ These are the important basics, though there are others exposed by docopt, locat
 
 - Patterns inside `[]` are parsed as a *sequence*, where in the reference implementation they are parsed as *distinct optional elements*. Here, `[opt1] [opt2]` is the same as `[opt1 opt2]` in the reference implementation, and `[opt1 opt2]` here is the same as `[(opt1 opt2)]` in the reference implementation. This is mainly because it drastically simplified parsing.
 - Does not count number of occurrences of flags/commands
-- Does not allow uppercase positional arguments (`ARG` as opposed to `<arg>`)
+- Does not (yet) allow uppercase positional arguments (`ARG` as opposed to `<arg>`)
 - Spaces not allowed before `...`
 - No multiple default values for repeatable elements
-

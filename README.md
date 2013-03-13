@@ -248,7 +248,7 @@ Option descriptions establish:
 
   ``getArgWithDefault opts "default" exp`` returns what `getArg opts exp` returns if it succeeds, or `"default"` if that fails.
 
-- These are the important basics, though there are others exposed by docopt, located in the `Public` submodule. Examples forthcoming!
+These are the important basics, though there are others exposed by docopt, located in the `Public` submodule. Examples forthcoming!
 
 ----------
 
@@ -256,26 +256,7 @@ Option descriptions establish:
 
 - Patterns inside `[]` are parsed as a *sequence*, where in the reference implementation they are parsed as *distinct optional elements*. Here, `[opt1] [opt2]` is the same as `[opt1 opt2]` in the reference implementation, and `[opt1 opt2]` here is the same as `[(opt1 opt2)]` in the reference implementation. This is mainly because it drastically simplified parsing.
 - Does not count number of occurrences of flags/commands
-- Does not (?) handle uppercase option arguments e.g. `-i FILE` in usage/option descriptions
 - Does not allow uppercase positional arguments (`ARG` as opposed to `<arg>`)
 - Spaces not allowed before `...`
 - No multiple default values for repeatable elements
 
-----------
-
-#### TODO: 
-
-- [x] Split the monolithic Docopt.hs into private submodules
-- [ ] Test the public API
-    - [x] fix [options] parsing of any defined option
-    - [x] sort out a way to differentiate boolean flags from options with expected values
-    - [x] parse consecutive flags/options
-    - [x] parse stacked short flags/options (ie "-aBc")
-        - [x] in usage patterns
-        - [x] in given command-line arguments
-    - [x] parse synonymous flags/options whenever one is specified
-    - [ ] make the public API dead simple
-- [ ] Sort out the .cabal config, turn into a real package
-- [ ] Documentation
-    - [ ] Write a helpful README
-    - [ ] Document the public API (in the source / Haddock)

@@ -232,19 +232,19 @@ Option descriptions establish:
 
 ### Queries
 
-- **`getArg`** ` :: Monad m => Options -> Expectation -> m String`
+- `getArg :: Monad m => Options -> Expectation -> m String`
 
   ``opts `getArg` exp`` returns the last value of `exp` specified in the arguments, or the default value (if one is specified), or `fail`s.
 
-- **`isPresent`** ` :: Options -> Expectation -> Bool`
+- `isPresent :: Options -> Expectation -> Bool`
 
   ``opts `isPresent` exp`` returns `True` if `exp` was given in the arguments, else `False`. Useful for use with flags.
 
-- **`getAllArgs`** ` :: Options -> Expectation -> [String]`
+- `getAllArgs :: Options -> Expectation -> [String]`
 
   ``opts `getAllArgs` exp`` returns the list of all occurrences of `exp` in the arguments, in order of last to first given. If none given, returns a singleton list of the default value, if specified. Otherwise returns an empty list. Useful for repeatable elements.
 
-- **`getArgWithDefault`** `:: Options -> String -> Expectation -> String`
+- `getArgWithDefault :: Options -> String -> Expectation -> String`
 
   ``getArgWithDefault opts "default" exp`` returns what `getArg opts exp` returns if it succeeds, or `"default"` if that fails.
 

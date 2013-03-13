@@ -1,4 +1,4 @@
-name:                Docopt
+name:                docopt
 version:             0.1.0.0
 synopsis:            A command-line interface description language and parser that will make you smile
 -- description:         (TODO)

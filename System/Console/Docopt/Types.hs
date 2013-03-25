@@ -37,7 +37,7 @@ type OptPattern = Pattern Option
 humanize :: Option -> String
 humanize opt = case opt of
   Command name    -> name
-  Argument name   -> "<"++name++">"
+  Argument name   -> name
   LongOption name -> "--"++name
   ShortOption c   -> ['-',c]
   AnyOption       -> "[options]"
@@ -69,15 +69,18 @@ type OptInfoMap = Map Option OptionInfo
 type OptFormat = (OptPattern, OptInfoMap)
 
 -- | 
-data OptParserState = OptParserState { optInfoMap :: OptInfoMap
-                                     , parsedArgs :: Arguments
-                                     , inShortOptStack :: Bool
-                                     } deriving (Show)
+data OptParserState = OptParserState 
+                      { optInfoMap :: OptInfoMap
+                      , parsedArgs :: Arguments
+                      , inShortOptStack :: Bool
+                      , inTopLevelSequence :: Bool
+                      } deriving (Show)
 
 fromOptInfoMap :: OptInfoMap -> OptParserState
 fromOptInfoMap m = OptParserState { optInfoMap = m
                                   , parsedArgs = M.empty
-                                  , inShortOptStack = False }
+                                  , inShortOptStack = False
+                                  , inTopLevelSequence = True }
 
 
 data ArgValue = MultiValue [String]

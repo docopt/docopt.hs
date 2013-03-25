@@ -715,7 +715,6 @@ $ prog -q arg
 #
 
 r"""usage: prog [-]"""
-
 $ prog -
 {"-": true}
 
@@ -727,7 +726,6 @@ $ prog
 #
 
 r"""usage: prog [NAME [NAME ...]]"""
-
 $ prog a b
 {"NAME": ["a", "b"]}
 
@@ -809,7 +807,6 @@ $ prog
 #
 
 r"""usage: prog [--file=<f>]"""
-
 $ prog
 {"--file": null}
 
@@ -835,7 +832,6 @@ $ prog
 #
 
 r"""usage: prog --long=<arg> ..."""
-
 $ prog --long one
 {"--long": ["one"]}
 

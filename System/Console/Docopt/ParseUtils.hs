@@ -18,10 +18,16 @@ import Data.Char (isSpace, toUpper, toLower)
 lowers = ['a'..'z']
 uppers = ['A'..'Z']
 letters = lowers++uppers
-alphanumerics = letters++['0'..'9']++['-','_']
+numerics = ['0'..'9']++"-_"
+specialChars = " :/"
+alphanumerics = letters++numerics
+alphanumSpecial = alphanumerics ++ specialChars
 
 
 -- * Basic Parsers
+
+caseInsensitive :: String -> CharParser u String
+caseInsensitive = sequence . (map (\c -> (char $ toLower c) <|> (char $ toUpper c)))
 
 isInlineSpace :: Char -> Bool
 isInlineSpace c = not (c `elem` "\n\r") 

@@ -23,67 +23,93 @@ flatOneOf = flatten . OneOf
 
 -- * Pattern Parsers 
 
-pLine :: CharParser u OptPattern
-pLine = flatten . OneOf <$> pExpSeq `sepBy1` (inlineSpaces >> pipe)
+pLine :: CharParser OptInfoMap OptPattern
+pLine = flatten . OneOf <$> pSeq `sepBy1` (inlineSpaces >> pipe)
+        where pSeq = Sequence <$> (pExp `sepEndBy` inlineSpaces1)
 
-pExpSeq :: CharParser u OptPattern
+pExpSeq :: CharParser OptInfoMap OptPattern
 pExpSeq = flatten . Sequence <$> (pExp `sepEndBy1` inlineSpaces1)
 
-pOptGroup :: CharParser u [OptPattern]
+pOptGroup :: CharParser OptInfoMap [OptPattern]
 pOptGroup = pGroup '[' pExpSeq ']'
 
-pReqGroup :: CharParser u [OptPattern]
+pReqGroup :: CharParser OptInfoMap [OptPattern]
 pReqGroup = pGroup '(' pExpSeq ')'
 
-pShortOption :: CharParser u (Char, Bool)
+saveOptionsExpectVal :: (a -> Option) -> [(a, Bool)] -> CharParser OptInfoMap ()
+saveOptionsExpectVal t pairs = do
+    updateState $ \st -> foldl save st pairs
+    where save infomap (name, optExpectsVal) = M.alter alterFn opt infomap
+            where opt = t name
+                  alterFn oldval = Just $ case oldval of
+                    Just oldinfo -> oldinfo {expectsVal = optExpectsVal || (expectsVal oldinfo)}
+                    Nothing -> (fromSynList [opt]) {expectsVal = optExpectsVal}
+
+
+pShortOption :: CharParser OptInfoMap (Char, Bool)
 pShortOption = try $ do char '-' 
                         ch <- letter 
-                        expectsVal <- option False pOptionArgument
+                        expectsVal <- pOptionArgument
                         return (ch, expectsVal)
 
-pStackedShortOption :: CharParser u OptPattern
+pStackedShortOption :: CharParser OptInfoMap OptPattern
 pStackedShortOption = try $ do 
     char '-'
-    chars <- many letter
+    chars <- many1 $ try letter
+    lastExpectsVal <- pOptionArgument
+    let reverseChars = reverse chars
+        (lastChar, firstChars) = (head reverseChars, tail reverseChars)
+        firstPairs = map (\x -> (x,False)) firstChars
+        lastPair = (lastChar, lastExpectsVal)
+    saveOptionsExpectVal ShortOption (firstPairs ++ [lastPair])
     case length chars of
       0 -> fail ""
       1 -> return $ Atom . ShortOption $ head chars
       _ -> return $ Repeated . OneOf $ map (Atom . ShortOption) chars
 
-pLongOption :: CharParser u (Name, Bool)
-pLongOption = try $ do string "--" 
-                       name <- many1 $ oneOf alphanumerics
-                       expectsVal <- option False pOptionArgument
-                       return (name, expectsVal)
+pLongOption :: CharParser OptInfoMap (Name, Bool)
+pLongOption = try $ do 
+    string "--" 
+    name <- many1 $ oneOf alphanumerics
+    expectsVal <- pOptionArgument
+    return (name, expectsVal)
 
-pAnyOption :: CharParser u String
+pAnyOption :: CharParser OptInfoMap String
 pAnyOption = try (string "options")
 
-pOptionArgument :: CharParser u Bool -- True if one is encountered, else False
+pOptionArgument :: CharParser OptInfoMap Bool -- True if one is encountered, else False
 pOptionArgument = try $ do char '=' <|> inlineSpace
-                           pArgument <|> many1 (oneOf uppers)
+                           pArgument
                            return True
-                  <|> return False
+              <|> return False
 
-pArgument :: CharParser u String
-pArgument = between (char '<') (char '>') pCommand
+pArgument :: CharParser OptInfoMap String
+pArgument = bracketStyle <|> upperStyle 
+            where bracketStyle = do
+                      open <- char '<' 
+                      name <- many $ oneOf alphanumSpecial
+                      close <- char '>'
+                      return $ [open]++name++[close]
+                  upperStyle = many1 $ oneOf $ uppers ++ numerics
 
-pCommand :: CharParser u String
+pCommand :: CharParser OptInfoMap String
 pCommand = many1 (oneOf alphanumerics)
 
 -- '<arg>...' make an OptPattern Repeated if followed by ellipsis
-repeatable :: CharParser u OptPattern -> CharParser u OptPattern
+repeatable :: CharParser OptInfoMap OptPattern -> CharParser OptInfoMap OptPattern
 repeatable p = do 
     expct <- p
-    tryRepeat <- ((try ellipsis) >> (return Repeated)) <|> (return id)
+    tryRepeat <- ((try $ (optional inlineSpace) >> ellipsis) >> (return Repeated)) <|> (return id)
     return (tryRepeat expct)
 
-pExp :: CharParser u OptPattern
+pExp :: CharParser OptInfoMap OptPattern
 pExp = inlineSpaces >> repeatable value
      where value = Optional . flatOneOf <$> pOptGroup
                <|> flatOneOf <$> pReqGroup
                <|> pStackedShortOption
-               <|> Atom . LongOption . fst <$> pLongOption
+               <|> do (name, expectsVal) <- pLongOption
+                      saveOptionsExpectVal LongOption [(name, expectsVal)]
+                      return $ Atom $ LongOption name
                <|> return (Repeated $ Atom AnyOption) <* pAnyOption
                <|> Atom . Argument <$> pArgument
                <|> Atom . Command <$> pCommand
@@ -91,22 +117,19 @@ pExp = inlineSpaces >> repeatable value
 
 -- * Usage Pattern Parsers
 
-pUsageHeader :: CharParser u String
-pUsageHeader = try $ do 
-    u <- (char 'U' <|> char 'u')
-    sage <- string "sage:"
-    return (u:sage)
+pUsageHeader :: CharParser OptInfoMap String
+pUsageHeader = caseInsensitive "Usage:"
 
 -- | Ignores leading spaces and first word, then parses
 --   the rest of the usage line
-pUsageLine :: CharParser u OptPattern
+pUsageLine :: CharParser OptInfoMap OptPattern
 pUsageLine = 
     try $ do
         inlineSpaces 
         many1 (satisfy (not . isSpace)) -- prog name
         pLine
 
-pUsagePatterns :: CharParser u OptPattern
+pUsagePatterns :: CharParser OptInfoMap OptPattern
 pUsagePatterns = do
         many (notFollowedBy pUsageHeader >> anyChar)
         pUsageHeader
@@ -118,10 +141,10 @@ pUsagePatterns = do
 
 -- | Succeeds only on the first line of an option explanation
 --   (one whose first non-space character is '-')
-begOptionLine :: CharParser u String
+begOptionLine :: CharParser OptInfoMap String
 begOptionLine = inlineSpaces >> lookAhead (char '-') >> return "-"
 
-pOptSynonyms :: CharParser u ([Option], Bool)
+pOptSynonyms :: CharParser OptInfoMap ([Option], Bool)
 pOptSynonyms = do inlineSpaces 
                   pairs <- p `sepEndBy1` (optional (char ',') >> inlineSpace)
                   let expectations = map fst pairs
@@ -130,17 +153,15 @@ pOptSynonyms = do inlineSpaces
              where p =   (\(c, ev) -> (ShortOption c, ev)) <$> pShortOption
                      <|> (\(s, ev) -> (LongOption s, ev)) <$> pLongOption
 
-pDefaultTag :: CharParser u String
-pDefaultTag = 
-  let caseInsensitive = sequence_ . (map (\c -> (char $ toLower c) <|> (char $ toUpper c)))
-  in do
+pDefaultTag :: CharParser OptInfoMap String
+pDefaultTag = do
     caseInsensitive "[default:"
     inlineSpaces
     def <- many (noneOf "]")
     char ']'
     return def
 
-pOptDefault :: CharParser u (Maybe String)
+pOptDefault :: CharParser OptInfoMap (Maybe String)
 pOptDefault = do
     skipUntil (pDefaultTag <|> (newline >> begOptionLine))
     maybeDefault <- optionMaybe pDefaultTag
@@ -153,7 +174,7 @@ pOptDescription = try $ do
     skipUntil (newline >> begOptionLine)
     updateState $ \infomap -> 
       let optinfo = (fromSynList syns) {defaultVal = def, expectsVal = expectsVal}
-          saveOptInfo mp expct = M.insert expct optinfo mp
+          saveOptInfo infomap expct = M.insert expct optinfo infomap
       in  foldl saveOptInfo infomap syns 
     return ()
 
@@ -161,7 +182,6 @@ pOptDescriptions :: CharParser OptInfoMap OptInfoMap
 pOptDescriptions = do
     skipUntil (newline >> begOptionLine)
     optional newline
-    setState M.empty
     optional $ pOptDescription `sepEndBy` endline
     getState
 
@@ -194,11 +214,11 @@ expectSynonyms oim a@(Atom atom)  = case atom of
     e@(AnyOption)     -> a
     e@(LongOption ex)  -> 
         case synonyms <$> e `M.lookup` oim of
-          Just syns -> OneOf $ map Atom syns
+          Just syns -> flatten . OneOf $ map Atom syns
           Nothing -> a
     e@(ShortOption c) -> 
         case synonyms <$> e `M.lookup` oim of
-          Just syns -> OneOf $ map Atom syns
+          Just syns -> flatten . OneOf $ map Atom syns
           Nothing -> a
 
 canRepeat :: Eq a => Pattern a -> a -> Bool

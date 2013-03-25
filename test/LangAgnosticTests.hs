@@ -15,6 +15,7 @@ import           Data.Map (Map)
 import qualified Data.Map as M
 
 import Data.List.Split
+import Data.Char (isSpace)
 import Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as BS
 
@@ -64,6 +65,7 @@ main = do
         return (Sequence [], M.empty)
       Right o -> return o
     putStrLn $ "Docopt:\n" ++ blue usage
+    putStrLn $ "Pattern:\n" ++ magenta (show optFormat)
     --putStrLn $ "Cases:  " ++ show cases
     forEach cases $ \testcase -> do
       let (cmdline, rawTarget_) = break (== '\n') testcase

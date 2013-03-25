@@ -17,25 +17,37 @@ buildOptParser :: String ->
                   -- ^ a CharParser with which a ParsedArguments (k,v) list can be built
 buildOptParser delim fmt@(pattern, infomap) = case pattern of
   (Sequence pats) ->
-        foldl (andThen) (return ()) ps 
-      where inner_dops = (\pat -> (pat, infomap)) `map` pats
-            ps = (buildOptParser delim) `map` inner_dops
+      assertTopConsumesAll $ foldl (andThen) (return ()) ps 
+      where assertTopConsumesAll p = do
+              st <- getState
+              if inTopLevelSequence st
+                then do 
+                  updateState $ \st -> st {inTopLevelSequence = False}
+                  p <* eof
+                else p 
+            inner_pats = (\pat -> (pat, infomap)) `map` pats
+            ps = (buildOptParser delim) `map` inner_pats
             andThen = \p1 p2 -> do 
               p1
               do st <- getState 
                  if not $ inShortOptStack st
-                   then optional (try (string delim <?> "argument word break"))
+                   then optional (try (many (string delim) <?> "argument word break"))
                    else return ()
               p2
   (OneOf pats) ->
-        choice $ makeParser `map` inner_dops
-      where inner_dops = (\pat -> (pat, infomap)) `map` pats
+      choice $ makeParser `map` inner_pats
+      where inner_pats = (\pat -> (pat, infomap)) `map` pats
             makeParser = \opts -> try $ buildOptParser delim opts
   (Optional pat) ->
         optional $ try (buildOptParser delim (pat, infomap)) 
   (Repeated pat) ->
-        do many1 $ buildOptParser delim (pat, infomap) >> optional (try (string delim))
-           return ()
+      case pat of 
+        (Optional p) -> do
+          many $ try $ buildOptParser delim (p, infomap) >> (try $ string delim)
+          return ()
+        _            -> do 
+          many1 $ buildOptParser delim (pat, infomap) >> optional (try (string delim))
+          return ()
   (Atom pat) -> case pat of 
       o@(ShortOption c) ->
             do st <- getState
@@ -44,10 +56,9 @@ buildOptParser delim fmt@(pattern, infomap) = case pattern of
                updateState $ updateInShortOptStack True
                val <- if expectsVal $ M.findWithDefault (fromSynList []) o infomap 
                  then try $ do 
-                   (optional (char '=')) <|> (optional (string delim))
-                   val <- many (notFollowedBy (string delim) >> anyChar)
+                   optional $ string "=" <|> string delim
                    updateState $ updateInShortOptStack False
-                   return val
+                   manyTill anyChar (try $ lookAhead (string delim))
                  else return ""
                updateState $ withEachSynonym o $
                              \pa syn -> saveOccurrence syn val pa
@@ -91,10 +102,6 @@ updateInShortOptStack b ops = ops {inShortOptStack = b}
 updateParsedArgs :: (Arguments -> Arguments) -> OptParserState -> OptParserState
 updateParsedArgs f st = st {parsedArgs = f $ parsedArgs st}
 
---saveOccurrence :: Option -> String -> Arguments -> Arguments
---saveOccurrence o val argmap = M.insertWith f o [val] argmap
---    where f (newval:[]) oldval@("":vs) = newval : vs
---          f  newval     oldval         = newval ++ oldval
 saveOccurrence :: Option -> String -> Arguments -> Arguments
 saveOccurrence opt newval argmap = M.adjust updateVal opt argmap
     where updateVal oldval = case oldval of
@@ -105,9 +112,6 @@ saveOccurrence opt newval argmap = M.adjust updateVal opt argmap
               Present         -> Present
               NotPresent      -> Present
 
---assertPresent :: Option -> Arguments -> Arguments
---assertPresent o argmap = M.insertWith f o [""] argmap
---    where f newval oldval = oldval 
 assertPresent :: Option -> Arguments -> Arguments
 assertPresent opt argmap = saveOccurrence opt "" argmap
 
@@ -130,7 +134,7 @@ optInitialValue info opt =
       (AnyOption)     -> Nothing
       _               -> case expectsVal info of 
         True  -> case defaultVal info of
-          Just val -> Just $ MultiValue $ words val
+          Just val -> Just $ MultiValue $ reverse $ words val
           Nothing  -> Just $ MultiValue []
         False -> Just $ Counted 0
     False -> case opt of

@@ -2,12 +2,16 @@ module System.Console.Docopt.ParseUtils
 	(
 		module System.Console.Docopt.ParseUtils,
 		module System.Console.Docopt.ApplicativeParsec,
-		isSpace,
+		module Data.Char,
 	)
 	where
 
 import System.Console.Docopt.ApplicativeParsec
-import Data.Char (isSpace)
+
+import           Data.Map (Map)
+import qualified Data.Map as M
+
+import Data.Char (isSpace, toUpper, toLower)
 
 -- * Constants
 
@@ -24,25 +28,30 @@ isInlineSpace c = not (c `elem` "\n\r")
                	   && (isSpace c)
 
 inlineSpace :: CharParser u Char
-inlineSpace = satisfy isInlineSpace 
+inlineSpace = satisfy isInlineSpace
+			<?> "inline-space"
 
 -- | like `spaces`, except does not match newlines
 inlineSpaces :: CharParser u ()
 inlineSpaces = skipMany (satisfy isInlineSpace)
+			 <?> "inline-spaces"
 
 inlineSpaces1 :: CharParser u ()
 inlineSpaces1 = skipMany1 (satisfy isInlineSpace)
+			  <?> ">=1 inline-spaces"
 
 spaces1 :: CharParser u ()
 spaces1 = skipMany1 (satisfy isSpace)
+		<?> ">=1 spaces"
 
 endline = inlineSpaces >> newline
 optionalEndline = inlineSpaces >> (optional newline)
 
-pipe = char '|'
+pipe = char '|' <?> "'|'"
 
 ellipsis :: CharParser u String
-ellipsis = string "..."
+ellipsis = inlineSpaces >> string "..."
+		 <?> "'...'"
 
 -- |@skipUntil p@ ignores everything that comes before `p`. 
 -- Returns what `p` returns.
@@ -56,3 +65,6 @@ pGroup beg elemParser end = between (char beg) (inlineSpaces >> char end)
                               (inlineSpaces >> pipe)
 
 
+-- | Data.Map utils
+alterAllWithKey :: Ord k => (k -> Maybe a -> Maybe a) -> [k] -> Map k a -> Map k a
+alterAllWithKey f ks m = foldl (\m' k -> M.alter (f k) k m') m ks

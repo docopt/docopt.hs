@@ -9,8 +9,8 @@ main = do
 
 	opts <- optionsWithUsageFileDebug "naval_fate.USAGE.txt"
 
-	--print opts
-	--putStrLn ""
+	print opts
+	putStrLn ""
 
 	when (opts `isPresent` (command "ship")) $ do
 		putStrLn "Command 'ship'"

@@ -3,6 +3,7 @@ module System.Console.Docopt.Types
 
 import           Data.Map (Map)
 import qualified Data.Map as M
+import           Data.List (nub)
 
 import System.Console.Docopt.ParseUtils
 
@@ -10,68 +11,84 @@ import System.Console.Docopt.ParseUtils
 
 type Name = String
 
-data Expectation = Sequence [Expectation]   -- firstarg secondarg thirdarg
-                 | OneOf [Expectation]      -- --flag | --other
-                 | Optional Expectation     -- [--flag]
-                 | Repeated Expectation     -- args...
-                 | ShortOption Char         -- -f
-                 | LongOption Name          -- --flag
-                 | AnyOption                -- [options]
-                 | Argument Name            -- <name>
-                 | Command Name             -- commandname
-                 deriving (Show, Eq, Ord)
+data Pattern a = Sequence [Pattern a]
+               | OneOf [Pattern a]
+               | Optional (Pattern a)
+               | Repeated (Pattern a)
+               | Atom a
+               deriving (Show, Eq, Ord)
 
--- * Main Functions
+atoms :: Eq a => Pattern a -> [a]
+atoms (Sequence ps) = foldl (++) [] $ map atoms ps
+atoms (OneOf ps)    = foldl (++) [] $ map atoms $ nub ps
+atoms (Optional p)  = atoms p
+atoms (Repeated p)  = atoms p
+atoms (Atom a)      = [a]
 
---main :: IO ()
---main = do
---    contents <- getContents
---    putStr $ unlines $ map (show . parseDocopt) $ lines contents
+data Option = Command Name
+            | Argument Name
+            | LongOption Name
+            | ShortOption Char
+            | AnyOption
+            deriving (Show, Eq, Ord)
 
---testDocopt :: IO ()
---testDocopt = do
---    contents <- readFile "test_usage.txt"
---    print $ runParser pDocopt M.empty "" contents
+type OptPattern = Pattern Option
 
+humanize :: Option -> String
+humanize opt = case opt of
+  Command name    -> name
+  Argument name   -> "<"++name++">"
+  LongOption name -> "--"++name
+  ShortOption c   -> ['-',c]
+  AnyOption       -> "[options]"
 
 -- | Used when parsing through the available option descriptions.
 --   Holds a list of synonymous options, Maybe a default value (if specified),
---   and a Bool that indicates whether this option is a flag (--flag) 
---   or an option that needs an argument (--opt=arg)
-data SynonymDefault = SynonymDefault 
-                      { synonyms :: [Expectation]
-                      , defaultVal :: Maybe String
-                      , expectsVal :: Bool 
-                      } deriving (Show, Eq, Ord)
+--   an expectsVal :: Bool that indicates whether this option is a flag (--flag) 
+--   or an option that needs an argument (--opt=arg), and isRepeated :: Bool 
+--   that indicates whether this option is always single or needs to be accumulated
+data OptionInfo = OptionInfo 
+                  { synonyms :: [Option]
+                  , defaultVal :: Maybe String
+                  , expectsVal :: Bool 
+                  , isRepeated :: Bool
+                  } deriving (Show, Eq, Ord)
 
-fromSynList :: [Expectation] -> SynonymDefault
-fromSynList es = SynonymDefault es Nothing False
+fromSynList :: [Option] -> OptionInfo
+fromSynList opts = OptionInfo { synonyms = opts
+                              , defaultVal = Nothing
+                              , expectsVal = False
+                              , isRepeated = False }
 
--- | Maps each available option to a SynonymDefault entry
+-- | Maps each available option to a OptionInfo entry
 --   (each synonymous option gets its own separate entry, for easy lookup)
-type SynDefMap = Map Expectation SynonymDefault
+type OptInfoMap = Map Option OptionInfo
 
 -- | Contains all the relevant information parsed out of a usage string.
 --   Used to build the actual command-line arg parser.
-type Docopt = (Expectation, SynDefMap)
+type OptFormat = (OptPattern, OptInfoMap)
 
 -- | 
-data OptParserState = OptParserState { synDefMap :: SynDefMap
-                                     , parsedArgs :: ParsedArguments
+data OptParserState = OptParserState { optInfoMap :: OptInfoMap
+                                     , parsedArgs :: Arguments
                                      , inShortOptStack :: Bool
                                      } deriving (Show)
 
-fromSynDefMap :: SynDefMap -> OptParserState
-fromSynDefMap m = OptParserState {synDefMap=m, parsedArgs=M.empty, inShortOptStack=False}
+fromOptInfoMap :: OptInfoMap -> OptParserState
+fromOptInfoMap m = OptParserState { optInfoMap = m
+                                  , parsedArgs = M.empty
+                                  , inShortOptStack = False }
 
-toOptions :: OptParserState -> Options
-toOptions st = (synDefMap st, parsedArgs st)
 
--- | Maps each Expectation to all of the valued parsed from the command line
+data ArgValue = MultiValue [String]
+              | Value String
+              | NoValue
+              | Counted Int
+              | Present
+              | NotPresent
+              deriving (Show, Eq, Ord)
+
+-- | Maps each Option to all of the valued parsed from the command line
 --   (in order of last to first, if multiple values encountered)
-type ParsedArguments = Map Expectation [String]
-
--- | The SynDefMap and ParsedArguments are all that need to be kept around
---   and given to the user, for use with all the public lookup methods.
-type Options = (SynDefMap, ParsedArguments)
+type Arguments = Map Option ArgValue
 

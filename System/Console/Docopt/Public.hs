@@ -4,127 +4,126 @@ module System.Console.Docopt.Public
     module System.Console.Docopt.Public,
 
     -- public types
-    Expectation(),
-    Options(),
+    Option(),
+    Arguments(),
   )
   where
 
 import System.Environment (getArgs)
 import System.Exit
 
-import Data.Map as M
+import Data.Map as M hiding (null)
 
 import Control.Applicative
 
 import System.Console.Docopt.ParseUtils
 import System.Console.Docopt.Types
 import System.Console.Docopt.UsageParse (pDocopt)
-import System.Console.Docopt.OptParse (getOptions)
+import System.Console.Docopt.OptParse (getArguments)
 
 
 -- * Public API
 
 -- ** Main option parsing entry points
 
-optionsWithUsageFile :: FilePath -> IO Options
-optionsWithUsageFile path = do usageStr <- readFile path
-                               rawargs <- getArgs
-                               case runParser pDocopt M.empty path usageStr of
-                                   Left err -> do putStrLn usageStr
-                                                  exitFailure
-                                   Right dop -> case getOptions dop rawargs of
-                                       Left err         -> do putStrLn usageStr
-                                                              exitFailure
-                                       Right parsedOpts -> return parsedOpts
+optionsWithUsage :: String -> [String] -> IO Arguments
+optionsWithUsage usage rawArgs = 
+    case runParser pDocopt M.empty "Usage" usage of
+        Left err -> do putStrLn usage
+                       exitFailure
+        Right fmt -> case getArguments fmt rawArgs of
+            Left err         -> do putStrLn usage
+                                   exitFailure
+            Right parsedArgs -> return parsedArgs
 
-optionsWithUsageFileDebug :: FilePath -> IO Options
+optionsWithUsageDebug :: String -> [String] -> IO Arguments
+optionsWithUsageDebug usage rawArgs =
+    case runParser pDocopt M.empty "Usage" usage of
+        Left err  -> fail $ show err
+        Right fmt -> case getArguments fmt rawArgs of
+            Left err         -> fail $ show err
+            Right parsedArgs -> return parsedArgs
+
+optionsWithUsageFile :: FilePath -> IO Arguments
+optionsWithUsageFile path = do usageStr <- readFile path
+                               rawArgs <- getArgs
+                               optionsWithUsage usageStr rawArgs
+
+optionsWithUsageFileDebug :: FilePath -> IO Arguments
 optionsWithUsageFileDebug path = do usageStr <- readFile path
-                                    rawargs <- getArgs
-                                    case runParser pDocopt M.empty path usageStr of
-                                        Left err  -> fail $ show err
-                                        Right dop -> case getOptions dop rawargs of
-                                            Left err         -> fail $ show err
-                                            Right parsedOpts -> return parsedOpts
+                                    rawArgs <- getArgs
+                                    optionsWithUsageDebug usageStr rawArgs
 
 -- ** Option lookup methods
 
-isPresent :: Options -> Expectation -> Bool
-isPresent opts expct = let (_, pargs) = opts
-                       in case expct `M.lookup` pargs of
-                              Just _ -> True
-                              Nothing -> False
+isPresent :: Arguments -> Option -> Bool
+isPresent args opt = 
+  case opt `M.lookup` args of
+    Nothing  -> False
+    Just val -> case val of
+      NoValue    -> False
+      NotPresent -> False
+      _          -> True
 
-isPresentM :: Monad m => Options -> Expectation -> m Bool
-isPresentM o e = return $ isPresent o e
+isPresentM :: Monad m => Arguments -> Option -> m Bool
+isPresentM args o = return $ isPresent args o
 
-notPresent :: Options -> Expectation -> Bool
-notPresent o e = not $ isPresent o e
+notPresent :: Arguments -> Option -> Bool
+notPresent args o = not $ isPresent args o
 
-notPresentM :: Monad m => Options -> Expectation -> m Bool
-notPresentM o e = return $ not $ isPresent o e
+notPresentM :: Monad m => Arguments -> Option -> m Bool
+notPresentM args o = return $ not $ isPresent args o
 
-getArg :: Monad m => Options -> Expectation -> m String
-getArg opts expct = let (syndef, pargs) = opts
-                        failure = fail $ "no argument given: " ++ show expct
-                    in case expct `M.lookup` pargs of
-                          Just (val@(c:cs):vals) -> return val --ensure non-empty val
-                          _ -> case expct `M.lookup` syndef of
-                            Just syndef -> case defaultVal syndef of
-                              Just def -> return def 
-                              Nothing -> failure
-                            _ -> failure
+getArg :: Monad m => Arguments -> Option -> m String
+getArg args opt = 
+  let failure = fail $ "no argument given: " ++ show opt
+  in  case opt `M.lookup` args of
+        Nothing  -> failure
+        Just val -> case val of
+          MultiValue (v:vs) -> return v
+          Value v           -> return v
+          _                 -> failure          
 
-getFirstArg :: Monad m => Options -> Expectation -> m String
-getFirstArg opts expct = let (syndef, pargs) = opts
-                             failure = fail $ "no argument given: " ++ show expct
-                             def = case expct `M.lookup` syndef of
-                               Just syndef -> case defaultVal syndef of
-                                 Just val -> return val
-                                 Nothing -> failure
-                               _ -> failure
-                         in case expct `M.lookup` pargs of
-                              Just vals@(_:_) -> case last vals of
-                                "" -> def --if empty string, just use default
-                                val -> return val
-                              _ -> def
+getFirstArg :: Monad m => Arguments -> Option -> m String
+getFirstArg args opt = 
+  let failure = fail $ "no argument given: " ++ show opt
+  in  case opt `M.lookup` args of
+        Nothing  -> failure
+        Just val -> case val of
+          MultiValue vs -> if null vs then failure else return $ last vs
+          Value v       -> return v
+          _             -> failure          
 
-getArgWithDefault :: Options -> String -> Expectation -> String
-getArgWithDefault opts def expct = case opts `getArg` expct of
-                                      Just val -> val
-                                      Nothing -> def
 
-getAllArgs :: Options -> Expectation -> [String]
-getAllArgs opts expct = let (syndef, pargs) = opts
-                        in case expct `M.lookup` pargs of
-                             Just vals -> vals
-                             Nothing -> case (expct `M.lookup` syndef) >>= defaultVal of
-                               Just def -> [def]
-                               Nothing -> []
+getArgWithDefault :: Arguments -> String -> Option -> String
+getArgWithDefault args def opt = 
+  case args `getArg` opt of
+    Just val -> val
+    Nothing -> def
 
-getAllArgsM :: Monad m => Options -> Expectation -> m [String]
+getAllArgs :: Arguments -> Option -> [String]
+getAllArgs args opt = 
+  case opt `M.lookup` args of
+     Nothing  -> []
+     Just val -> case val of
+       MultiValue vs -> reverse vs
+       Value v       -> [v] 
+       _             -> []
+
+getAllArgsM :: Monad m => Arguments -> Option -> m [String]
 getAllArgsM o e = return $ getAllArgs o e
 
--- is this lookup function even useful?
-getDefaultArg :: Monad m => Options -> Expectation -> m String
-getDefaultArg opts expct = let (syndefmap, _) = opts
-                               failure = fail $ "no default argument given: " ++ show expct
-                           in case expct `M.lookup` syndefmap of
-                             Just syndef -> case defaultVal syndef of
-                               Just val -> return val
-                               Nothing -> failure
-                             _ -> failure
 
+-- ** Public Option constructor functions
 
--- ** Public Expectation constructor functions
-
-command :: String -> Expectation
+command :: String -> Option
 command s = Command s
 
-argument :: String -> Expectation
+argument :: String -> Option
 argument s = Argument s
 
-shortOption :: Char -> Expectation
+shortOption :: Char -> Option
 shortOption c = ShortOption c
 
-longOption :: String -> Expectation
+longOption :: String -> Option
 longOption s = LongOption s

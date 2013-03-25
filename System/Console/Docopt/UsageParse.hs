@@ -1,36 +1,38 @@
 module System.Console.Docopt.UsageParse 
   where
 
+import           Data.Map (Map)
 import qualified Data.Map as M
+import           Data.List (nub)
 
 import System.Console.Docopt.ParseUtils
 import System.Console.Docopt.Types
 
 -- * Helpers
 
--- |Flattens the top level of an `Expectation`, as long as that 
--- /does not/ alter the matching semantics of the `Expectation`
-flatten :: Expectation -> Expectation
-flatten (Sequence (e:[])) = e
-flatten (OneOf (e:[]))    = e
-flatten e                 = e
+-- | Flattens the top level of a Pattern, as long as that 
+--   /does not/ alter the matching semantics of the Pattern
+flatten :: Pattern a -> Pattern a
+flatten (Sequence (x:[])) = x
+flatten (OneOf (x:[]))    = x
+flatten x                 = x
 
 flatSequence = flatten . Sequence
 flatOneOf = flatten . OneOf
 
 
--- * Expectation Parsers 
+-- * Pattern Parsers 
 
-pLine :: CharParser u Expectation
+pLine :: CharParser u OptPattern
 pLine = flatten . OneOf <$> pExpSeq `sepBy1` (inlineSpaces >> pipe)
 
-pExpSeq :: CharParser u Expectation
+pExpSeq :: CharParser u OptPattern
 pExpSeq = flatten . Sequence <$> (pExp `sepEndBy1` inlineSpaces1)
 
-pOptGroup :: CharParser u [Expectation]
+pOptGroup :: CharParser u [OptPattern]
 pOptGroup = pGroup '[' pExpSeq ']'
 
-pReqGroup :: CharParser u [Expectation]
+pReqGroup :: CharParser u [OptPattern]
 pReqGroup = pGroup '(' pExpSeq ')'
 
 pShortOption :: CharParser u (Char, Bool)
@@ -39,14 +41,14 @@ pShortOption = try $ do char '-'
                         expectsVal <- option False pOptionArgument
                         return (ch, expectsVal)
 
-pStackedShortOption :: CharParser u Expectation
+pStackedShortOption :: CharParser u OptPattern
 pStackedShortOption = try $ do 
     char '-'
     chars <- many letter
     case length chars of
       0 -> fail ""
-      1 -> return $ ShortOption $ head chars
-      _ -> return $ Repeated . OneOf $ map ShortOption chars
+      1 -> return $ Atom . ShortOption $ head chars
+      _ -> return $ Repeated . OneOf $ map (Atom . ShortOption) chars
 
 pLongOption :: CharParser u (Name, Bool)
 pLongOption = try $ do string "--" 
@@ -69,22 +71,22 @@ pArgument = between (char '<') (char '>') pCommand
 pCommand :: CharParser u String
 pCommand = many1 (oneOf alphanumerics)
 
--- '<arg>...' make an Expectation Repeated if followed by ellipsis
-repeatable :: CharParser u Expectation -> CharParser u Expectation
+-- '<arg>...' make an OptPattern Repeated if followed by ellipsis
+repeatable :: CharParser u OptPattern -> CharParser u OptPattern
 repeatable p = do 
     expct <- p
     tryRepeat <- ((try ellipsis) >> (return Repeated)) <|> (return id)
     return (tryRepeat expct)
 
-pExp :: CharParser u Expectation
+pExp :: CharParser u OptPattern
 pExp = inlineSpaces >> repeatable value
      where value = Optional . flatOneOf <$> pOptGroup
                <|> flatOneOf <$> pReqGroup
                <|> pStackedShortOption
-               <|> LongOption . fst <$> pLongOption
-               <|> return (Repeated AnyOption) <* pAnyOption
-               <|> Argument <$> pArgument
-               <|> Command <$> pCommand
+               <|> Atom . LongOption . fst <$> pLongOption
+               <|> return (Repeated $ Atom AnyOption) <* pAnyOption
+               <|> Atom . Argument <$> pArgument
+               <|> Atom . Command <$> pCommand
 
 
 -- * Usage Pattern Parsers
@@ -97,16 +99,20 @@ pUsageHeader = try $ do
 
 -- | Ignores leading spaces and first word, then parses
 --   the rest of the usage line
-pUsageLine :: CharParser u Expectation
-pUsageLine = try $ do
-                inlineSpaces >> many1 (satisfy (not . isSpace))
-                pLine
+pUsageLine :: CharParser u OptPattern
+pUsageLine = 
+    try $ do
+        inlineSpaces 
+        many1 (satisfy (not . isSpace)) -- prog name
+        pLine
 
-pUsagePatterns :: CharParser u Expectation
+pUsagePatterns :: CharParser u OptPattern
 pUsagePatterns = do
-        (skipUntil pUsageHeader) >> pUsageHeader
+        many (notFollowedBy pUsageHeader >> anyChar)
+        pUsageHeader
         optionalEndline
-        flatten . OneOf <$> (pUsageLine `sepEndBy1` endline)
+        usageLines <- (pUsageLine `sepEndBy` endline)
+        return $ flatten . OneOf $ usageLines
 
 -- * Option Synonyms & Defaults Parsers
 
@@ -115,7 +121,7 @@ pUsagePatterns = do
 begOptionLine :: CharParser u String
 begOptionLine = inlineSpaces >> lookAhead (char '-') >> return "-"
 
-pOptSynonyms :: CharParser u ([Expectation], Bool)
+pOptSynonyms :: CharParser u ([Option], Bool)
 pOptSynonyms = do inlineSpaces 
                   pairs <- p `sepEndBy1` (optional (char ',') >> inlineSpace)
                   let expectations = map fst pairs
@@ -125,8 +131,10 @@ pOptSynonyms = do inlineSpaces
                      <|> (\(s, ev) -> (LongOption s, ev)) <$> pLongOption
 
 pDefaultTag :: CharParser u String
-pDefaultTag = do
-    string "[default:"
+pDefaultTag = 
+  let caseInsensitive = sequence_ . (map (\c -> (char $ toLower c) <|> (char $ toUpper c)))
+  in do
+    caseInsensitive "[default:"
     inlineSpaces
     def <- many (noneOf "]")
     char ']'
@@ -138,53 +146,69 @@ pOptDefault = do
     maybeDefault <- optionMaybe pDefaultTag
     return maybeDefault
 
-pOptDescription :: CharParser SynDefMap ()
+pOptDescription :: CharParser OptInfoMap ()
 pOptDescription = try $ do
     (syns, expectsVal) <- pOptSynonyms
     def <- pOptDefault
     skipUntil (newline >> begOptionLine)
-    updateState $ \synmap -> 
-      let syndef = SynonymDefault {synonyms = syns, defaultVal = def, expectsVal = expectsVal}
-          saveSynDef mp expct = M.insert expct syndef mp
-      in  foldl saveSynDef synmap syns 
+    updateState $ \infomap -> 
+      let optinfo = (fromSynList syns) {defaultVal = def, expectsVal = expectsVal}
+          saveOptInfo mp expct = M.insert expct optinfo mp
+      in  foldl saveOptInfo infomap syns 
     return ()
 
-pOptDescriptions :: CharParser SynDefMap SynDefMap
+pOptDescriptions :: CharParser OptInfoMap OptInfoMap
 pOptDescriptions = do
     skipUntil (newline >> begOptionLine)
-    newline
+    optional newline
     setState M.empty
-    pOptDescription `sepEndBy` endline
+    optional $ pOptDescription `sepEndBy` endline
     getState
 
--- * Docopt Types, Parser
 
 -- | Main usage parser: parses all of the usage lines into an Exception,
 --   and all of the option descriptions along with any accompanying 
 --   defaults, and returns both in a tuple
-pDocopt :: CharParser SynDefMap Docopt
+pDocopt :: CharParser OptInfoMap OptFormat
 pDocopt = do
-    expct <- pUsagePatterns
-    optSynsDefs <- pOptDescriptions
-    let expct' = expectSynonyms optSynsDefs expct
-    return (expct', optSynsDefs)
+    optPattern <- pUsagePatterns
+    optInfoMap <- pOptDescriptions
+    let optPattern' = expectSynonyms optInfoMap optPattern
+        saveCanRepeat pat el minfo = case minfo of 
+          (Just info) -> Just $ info {isRepeated = canRepeat pat el}
+          (Nothing)   -> Just $ (fromSynList []) {isRepeated = canRepeat pat el}
+        optInfoMap' = alterAllWithKey (saveCanRepeat optPattern') (atoms optPattern') optInfoMap
+    return (optPattern', optInfoMap')
 
 
--- ** Expectation restructuring
+-- ** Pattern transformation & analysis
 
-expectSynonyms :: SynDefMap -> Expectation -> Expectation
-expectSynonyms sdm (Sequence exs)    = Sequence $ map (expectSynonyms sdm) exs
-expectSynonyms sdm (OneOf exs)       = OneOf $ map (expectSynonyms sdm) exs
-expectSynonyms sdm (Optional ex)     = Optional $ expectSynonyms sdm ex
-expectSynonyms sdm (Repeated ex)     = Repeated $ expectSynonyms sdm ex
-expectSynonyms sdm e@(Argument ex)   = e
-expectSynonyms sdm e@(Command ex)    = e
-expectSynonyms sdm e@(AnyOption)     = e
-expectSynonyms sdm e@(ShortOption c) = 
-    case synonyms <$> e `M.lookup` sdm of
-      Just syns -> OneOf syns
-      Nothing -> e
-expectSynonyms sdm e@(LongOption a)  = 
-    case synonyms <$> e `M.lookup` sdm of
-      Just syns -> OneOf syns
-      Nothing -> e
+expectSynonyms :: OptInfoMap -> OptPattern -> OptPattern
+expectSynonyms oim (Sequence exs) = Sequence $ map (expectSynonyms oim) exs
+expectSynonyms oim (OneOf exs)    = OneOf $ map (expectSynonyms oim) exs
+expectSynonyms oim (Optional ex)  = Optional $ expectSynonyms oim ex
+expectSynonyms oim (Repeated ex)  = Repeated $ expectSynonyms oim ex
+expectSynonyms oim a@(Atom atom)  = case atom of
+    e@(Command ex)    -> a
+    e@(Argument ex)   -> a
+    e@(AnyOption)     -> a
+    e@(LongOption ex)  -> 
+        case synonyms <$> e `M.lookup` oim of
+          Just syns -> OneOf $ map Atom syns
+          Nothing -> a
+    e@(ShortOption c) -> 
+        case synonyms <$> e `M.lookup` oim of
+          Just syns -> OneOf $ map Atom syns
+          Nothing -> a
+
+canRepeat :: Eq a => Pattern a -> a -> Bool
+canRepeat pat target = 
+  case pat of
+    (Sequence ps) -> canRepeatInside || (atomicOccurrences > 1)
+        where canRepeatInside = foldl (||) False $ map ((flip canRepeat) target) ps      
+              atomicOccurrences = length $ filter (== target) $ atoms $ Sequence ps
+    (OneOf ps) -> foldl (||) False $ map ((flip canRepeat) target) ps
+    (Optional p) -> canRepeat p target
+    (Repeated p) -> target `elem` (atoms pat)
+    (Atom a) -> False
+

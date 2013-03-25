@@ -17,15 +17,34 @@ cabal-version:       >=1.8
 
 
 library
-  exposed-modules:     System.Console.Docopt
-  
-  other-modules:       System.Console.Docopt.ApplicativeParsec
-                       System.Console.Docopt.ParseUtils
-                       System.Console.Docopt.Types
-                       System.Console.Docopt.UsageParse
-                       System.Console.Docopt.OptParse
-                       System.Console.Docopt.Public
+  exposed-modules:    System.Console.Docopt
+ 
+  other-modules:      System.Console.Docopt.ApplicativeParsec
+                      System.Console.Docopt.ParseUtils
+                      System.Console.Docopt.Types
+                      System.Console.Docopt.UsageParse
+                      System.Console.Docopt.OptParse
+                      System.Console.Docopt.Public
 
-  build-depends:       base == 4.5.*,
-                       parsec == 3.1.*,
-                       containers
+  build-depends:      base == 4.5.*,
+                      parsec == 3.1.*,
+                      containers
+
+test-suite tests
+  type:               exitcode-stdio-1.0
+  hs-source-dirs:     ./, test
+  main-is:            LangAgnosticTests.hs
+
+  build-depends:      base == 4.*,
+                      parsec == 3.1.*,
+                      containers,
+                      docopt,
+                      split,
+                      ansi-terminal,
+                      aeson,
+                      bytestring == 0.9.*
+
+  other-modules:      System.Console.Docopt.Types,
+                      System.Console.Docopt.ParseUtils,
+                      System.Console.Docopt.UsageParse,
+                      System.Console.Docopt.OptParse

@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 import Control.Monad (when, unless)
 import System.Exit
@@ -72,10 +72,12 @@ main = do
           rawTarget = filter (/= '\n') rawTarget_
           maybeTargetJSON = decode (BS.pack rawTarget) :: Maybe Value
           rawArgs = tail $ words cmdline
-          parsedArgs = case getArguments optFormat rawArgs of
-            Left e -> M.empty
-            Right a -> a
-          parsedArgsJSON = toJSON parsedArgs
+      parsedArgs <- case getArguments optFormat rawArgs of
+        Left e -> do
+          putStrLn $ "Parse Error: " ++ (red $ show e)
+          return M.empty
+        Right a -> return a
+      let parsedArgsJSON = toJSON parsedArgs
           testCaseSuccess = if (rawTarget == "\"user-error\"")
             then M.null parsedArgs
             else (maybeTargetJSON == Just parsedArgsJSON)

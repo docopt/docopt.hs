@@ -1,10 +1,10 @@
 module System.Console.Docopt.ParseUtils
-	(
-		module System.Console.Docopt.ParseUtils,
-		module System.Console.Docopt.ApplicativeParsec,
-		module Data.Char,
-	)
-	where
+    (
+        module System.Console.Docopt.ParseUtils,
+        module System.Console.Docopt.ApplicativeParsec,
+        module Data.Char,
+    )
+    where
 
 import System.Console.Docopt.ApplicativeParsec
 
@@ -29,26 +29,33 @@ alphanumSpecial = alphanumerics ++ specialChars
 caseInsensitive :: String -> CharParser u String
 caseInsensitive = sequence . (map (\c -> (char $ toLower c) <|> (char $ toUpper c)))
 
+lookAhead_ :: CharParser u a -> CharParser u ()
+lookAhead_ p = do lookAhead p
+                  return ()
+
+isNotFollowedBy :: Show a => CharParser u a -> CharParser u Bool
+isNotFollowedBy p = option False (notFollowedBy p >> return True)
+
 isInlineSpace :: Char -> Bool
 isInlineSpace c = not (c `elem` "\n\r") 
-               	   && (isSpace c)
+                   && (isSpace c)
 
 inlineSpace :: CharParser u Char
 inlineSpace = satisfy isInlineSpace
-			<?> "inline-space"
+            <?> "inline-space"
 
 -- | like `spaces`, except does not match newlines
 inlineSpaces :: CharParser u ()
 inlineSpaces = skipMany (satisfy isInlineSpace)
-			 <?> "inline-spaces"
+             <?> "inline-spaces"
 
 inlineSpaces1 :: CharParser u ()
 inlineSpaces1 = skipMany1 (satisfy isInlineSpace)
-			  <?> ">=1 inline-spaces"
+              <?> "1+ inline-spaces"
 
 spaces1 :: CharParser u ()
 spaces1 = skipMany1 (satisfy isSpace)
-		<?> ">=1 spaces"
+        <?> ">=1 spaces"
 
 endline = inlineSpaces >> newline
 optionalEndline = inlineSpaces >> (optional newline)
@@ -57,7 +64,7 @@ pipe = char '|' <?> "'|'"
 
 ellipsis :: CharParser u String
 ellipsis = inlineSpaces >> string "..."
-		 <?> "'...'"
+         <?> "'...'"
 
 -- |@skipUntil p@ ignores everything that comes before `p`. 
 -- Returns what `p` returns.
@@ -69,6 +76,12 @@ pGroup beg elemParser end = between (char beg) (inlineSpaces >> char end)
                             $ (inlineSpaces >> notFollowedBy pipe >> elemParser) 
                               `sepBy`
                               (inlineSpaces >> pipe)
+
+betweenS :: String -> String -> CharParser u a -> CharParser u [a]
+betweenS b e p = between begin end manyP
+                 where begin = try $ string b
+                       end = try $ inlineSpaces >> (string e)
+                       manyP = p `sepBy` inlineSpaces1
 
 
 -- | Data.Map utils

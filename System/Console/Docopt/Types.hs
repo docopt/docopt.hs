@@ -13,17 +13,19 @@ type Name = String
 
 data Pattern a = Sequence [Pattern a]
                | OneOf [Pattern a]
+               | Unordered [Pattern a]
                | Optional (Pattern a)
                | Repeated (Pattern a)
                | Atom a
                deriving (Show, Eq, Ord)
 
 atoms :: Eq a => Pattern a -> [a]
-atoms (Sequence ps) = foldl (++) [] $ map atoms ps
-atoms (OneOf ps)    = foldl (++) [] $ map atoms $ nub ps
-atoms (Optional p)  = atoms p
-atoms (Repeated p)  = atoms p
-atoms (Atom a)      = [a]
+atoms (Sequence ps)  = foldl (++) [] $ map atoms ps
+atoms (OneOf ps)     = foldl (++) [] $ map atoms $ nub ps
+atoms (Unordered ps) = foldl (++) [] $ map atoms $ nub ps
+atoms (Optional p)   = atoms p
+atoms (Repeated p)   = atoms p
+atoms (Atom a)       = [a]
 
 data Option = Command Name
             | Argument Name

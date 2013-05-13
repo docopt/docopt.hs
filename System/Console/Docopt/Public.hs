@@ -27,24 +27,32 @@ import System.Console.Docopt.OptParse (getOptions)
 -- ** Main option parsing entry points
 
 optionsWithUsageFile :: FilePath -> IO Options
-optionsWithUsageFile path = do usageStr <- readFile path
-                               rawargs <- getArgs
-                               case runParser pDocopt M.empty path usageStr of
-                                   Left err -> do putStrLn usageStr
-                                                  exitFailure
-                                   Right dop -> case getOptions dop rawargs of
-                                       Left err         -> do putStrLn usageStr
-                                                              exitFailure
-                                       Right parsedOpts -> return parsedOpts
+optionsWithUsageFile path = do usage <- readFile path
+                               optionsWithUsage path usage False
 
 optionsWithUsageFileDebug :: FilePath -> IO Options
-optionsWithUsageFileDebug path = do usageStr <- readFile path
-                                    rawargs <- getArgs
-                                    case runParser pDocopt M.empty path usageStr of
-                                        Left err  -> fail $ show err
-                                        Right dop -> case getOptions dop rawargs of
-                                            Left err         -> fail $ show err
-                                            Right parsedOpts -> return parsedOpts
+optionsWithUsageFileDebug path = do usage <- readFile path
+                                    optionsWithUsage path usage True
+
+optionsWithUsageString :: String -> IO Options
+optionsWithUsageString = flip (optionsWithUsage "string") False
+
+optionsWithUsageStringDebug :: String -> IO Options
+optionsWithUsageStringDebug = flip (optionsWithUsage "string") True
+
+optionsWithUsage :: String -> String -> Bool -> IO Options
+optionsWithUsage source usage showerrors =
+    do rawargs <- getArgs
+       case runParser pDocopt M.empty source usage of
+           Left err  -> failure err
+           Right dop -> case getOptions dop rawargs of
+               Left err         -> failure err
+               Right parsedOpts -> return parsedOpts
+
+    where failure err = if showerrors
+                        then fail $ show err
+                        else do putStrLn usage
+                                exitFailure
 
 -- ** Option lookup methods
 

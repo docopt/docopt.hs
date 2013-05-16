@@ -66,6 +66,12 @@ ellipsis :: CharParser u String
 ellipsis = inlineSpaces >> string "..."
          <?> "'...'"
 
+
+manyTill1 p end = do
+  first <- p 
+  rest <- manyTill p end
+  return $ first : rest
+
 -- |@skipUntil p@ ignores everything that comes before `p`. 
 -- Returns what `p` returns.
 skipUntil :: Show a => CharParser u a -> CharParser u ()

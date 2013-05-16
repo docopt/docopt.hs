@@ -94,7 +94,7 @@ buildOptParser delim fmt@(pattern, infomap) =
                   then try $ do 
                     optional $ string "=" <|> argDelim
                     updateState $ updateInShortOptStack False
-                    manyTill anyChar (lookAhead_ argDelim <|> eof)
+                    manyTill1 anyChar (lookAhead_ argDelim <|> eof)
                   else do
                     stillInShortStack <- isNotFollowedBy argDelim
                     unless stillInShortStack $ 
@@ -110,7 +110,7 @@ buildOptParser delim fmt@(pattern, infomap) =
                  then do 
                    string "=" <|> argDelim
                    --many (notFollowedBy (string delim) >> anyChar)
-                   manyTill anyChar (lookAhead_ argDelim <|> eof)
+                   manyTill1 anyChar (lookAhead_ argDelim <|> eof)
                  else return ""
                updateState $ withEachSynonym o $
                            \pa syn info -> saveOccurrence syn info val pa

@@ -251,8 +251,10 @@ These are the important basics, though there are others exposed by docopt, locat
 
 #### Differences from reference python implementation:
 
-- Patterns inside `[]` are parsed as a *sequence*, where in the reference implementation they are parsed as *distinct optional elements*. Here, `[opt1] [opt2]` is the same as `[opt1 opt2]` in the reference implementation, and `[opt1 opt2]` here is the same as `[(opt1 opt2)]` in the reference implementation. This is mainly because it drastically simplified parsing.
-- Does not count number of occurrences of flags/commands
-- Does not (yet) allow uppercase positional arguments (`ARG` as opposed to `<arg>`)
-- Spaces not allowed before `...`
-- No multiple default values for repeatable elements
+- does not automatically exclude from the `[options]` shortcut options that are already used elsewhere in the usage pattern (e.g. `usage: prog [options] -a` will try to parse `-a` twice).
+
+- eagerly parses argv in usage-specified order, which means something like `usage: prog [-v | -vv]` will always fail on `prog -vv` (and other similar issues; I think these can all be resolved by intelligently reordering order-insensitive subpatterns, e.g. transforming `prog [-v | -vv]` to `prog [-vv | -v]`).
+
+- does not automatically resolve partially-specified arguments, e.g. `--verb` does not match where `--verbose` is expected. This is planned to be deprecated in future versions of docopt, and will likely not be implemented in docopt.hs
+
+- is not insensitive to the ordering of adjacent options, e.g. `usage: prog -a -b` does not allow `prog -b -a` (reference implementation currently does).

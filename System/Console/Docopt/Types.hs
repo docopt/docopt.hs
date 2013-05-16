@@ -75,3 +75,8 @@ type ParsedArguments = Map Expectation [String]
 --   and given to the user, for use with all the public lookup methods.
 type Options = (SynDefMap, ParsedArguments)
 
+-- | Controls the behaviour of the parsing
+data ParsingOptions = ParsingOptions { showParseErrors :: Bool }
+
+defaultParsingOptions :: ParsingOptions
+defaultParsingOptions = ParsingOptions { showParseErrors = False }

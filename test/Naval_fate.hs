@@ -3,11 +3,30 @@ import System.Environment (getArgs)
 import System.Exit 
 import System.Console.Docopt
 
+usage = "Naval Fate.\n\n\
+\Usage:\n\
+\  naval_fate ship new <name>...\n\
+\  naval_fate ship shoot <x> <y>\n\
+\  naval_fate mine (set|remove) <x> <y> [--moored | --drifting]\n\
+\  naval_fate mine list [options]\n\
+\  naval_fate mine show [-md]\n\
+\  naval_fate ship <name> move <x> <y> [--speed=<kn>]\n\
+\  naval_fate --help | -h\n\
+\  naval_fate --version\n\n\
+\Options:\n\
+\  -h, --help      Show this screen.\n\
+\  --version       Show version.\n\
+\  --speed=<kn>    Speed in knots [default: 10].\n\
+\  -m, --moored    Moored (anchored) mine.\n\
+\  -d, --drifting  Drifting mine."
+
+testOptions = defaultParsingOptions { showParseErrors = True }
+
 main = do 
 	--args <- getArgs
 	--print args
 
-	opts <- optionsWithUsageFileDebug "naval_fate.USAGE.txt"
+	opts <- optionsWithUsage testOptions usage
 
 	--print opts
 	--putStrLn ""
@@ -57,4 +76,4 @@ main = do
 	when (opts `isPresent` (longOption "version")) $ do
 		putStrLn "Naval Fate v0.0.0.0.0.1.0"
 	when (opts `isPresent` (longOption "help")) $ do
-		putStrLn =<< readFile "naval_fate.USAGE.txt"
+		putStrLn usage

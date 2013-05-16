@@ -6,6 +6,10 @@ module System.Console.Docopt.Public
     -- public types
     Expectation(),
     Options(),
+    ParsingOptions(..),
+
+    -- everything else
+    defaultParsingOptions
   )
   where
 
@@ -26,25 +30,23 @@ import System.Console.Docopt.OptParse (getOptions)
 
 -- ** Main option parsing entry points
 
-optionsWithUsageFile :: FilePath -> IO Options
-optionsWithUsageFile path = do usageStr <- readFile path
-                               rawargs <- getArgs
-                               case runParser pDocopt M.empty path usageStr of
-                                   Left err -> do putStrLn usageStr
-                                                  exitFailure
-                                   Right dop -> case getOptions dop rawargs of
-                                       Left err         -> do putStrLn usageStr
-                                                              exitFailure
-                                       Right parsedOpts -> return parsedOpts
+optionsWithUsage :: ParsingOptions -> String -> IO Options
+optionsWithUsage options usage =
+    do rawargs <- getArgs
+       case runParser pDocopt M.empty "" usage of
+           Left err  -> failure err
+           Right dop -> case getOptions dop rawargs of
+               Left err         -> failure err
+               Right parsedOpts -> return parsedOpts
 
-optionsWithUsageFileDebug :: FilePath -> IO Options
-optionsWithUsageFileDebug path = do usageStr <- readFile path
-                                    rawargs <- getArgs
-                                    case runParser pDocopt M.empty path usageStr of
-                                        Left err  -> fail $ show err
-                                        Right dop -> case getOptions dop rawargs of
-                                            Left err         -> fail $ show err
-                                            Right parsedOpts -> return parsedOpts
+    where failure err = if showParseErrors options
+                        then fail $ show err
+                        else do putStrLn usage
+                                exitFailure
+
+optionsWithUsageFile :: ParsingOptions -> FilePath -> IO Options
+optionsWithUsageFile options path = do usage <- readFile path
+                                       optionsWithUsage options usage
 
 -- ** Option lookup methods
 

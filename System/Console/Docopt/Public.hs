@@ -113,6 +113,17 @@ getAllArgs args opt =
 getAllArgsM :: Monad m => Arguments -> Option -> m [String]
 getAllArgsM o e = return $ getAllArgs o e
 
+getArgCount :: Arguments -> Option -> Int
+getArgCount args opt = 
+  case opt `M.lookup` args of
+    Nothing -> 0
+    Just val -> case val of
+      Counted i     -> i
+      MultiValue vs -> length vs
+      Value _       -> 1
+      Present       -> 1
+      _             -> 0
+
 
 -- ** Public Option constructor functions
 

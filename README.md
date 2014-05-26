@@ -27,17 +27,17 @@ import Data.Char (toUpper)
 import System.Console.Docopt (optionsWithUsageFile, getArg, isPresent)
 
 main = do
-  opts <- optionsWithUsageFile "USAGE.txt"
+  args <- optionsWithUsageFile "USAGE.txt"
 
-  when (opts `isPresent` (command "cat")) $ do
-    file <- opts `getArg` (argument "file")
+  when (args `isPresent` (command "cat")) $ do
+    file <- args `getArg` (argument "file")
     putStr =<< readFile file
 
   when (opts `isPresent` (command "echo")) $ do
-    let charTransform = if opts `isPresent` (longOption "caps")
+    let charTransform = if args `isPresent` (longOption "caps")
                           then toUpper
                           else id
-    string <- opts `getArg` (argument "string")
+    string <- args `getArg` (argument "string")
     putStrLn $ map charTransform string
 
 ```
@@ -158,7 +158,7 @@ Option descriptions establish:
         myprog --help | --verbose
 
       Options: 
-        -h, --help      Print help text       
+        -h, --help      Print help text
         -v --verbose    Print help text twice 
   ```
 
@@ -179,7 +179,7 @@ Option descriptions establish:
   Options can be separated from arguments with a single space or a `=`, and arguments can have the form `<arg>` or `ARG`. Just be sure to separate synonyms and arguments from the beginning of the description by **at least 2 spaces**.
 
   ```
-      --opt1 ARG1   Option 1.      
+      --opt1 ARG1   Option 1.
       --opt2=<arg2> Option 2.        # BAD: use 2 spaces
       -a <arg3>     Option 3.
       -b=ARG4       Option 4. 
@@ -198,13 +198,13 @@ Option descriptions establish:
 
 ## Types
 
-- **`Options`**
+- **`Arguments`**
 
   This is the object you receive when docopt has successfully parsed your help text *and* the arguments passed to your program. 
 
-- **`Expectation`**
+- **`Option`**
 
-  This is the data type for individual elements of your usage patterns (and internally, recursive patterns as well - it is the 'form' that docopt *expects* your program's arguments to take).
+  This is the data type for individual elements of your usage patterns.
 
   Constructors:
 
@@ -219,41 +219,42 @@ Option descriptions establish:
 
 ## Option parsing
 
-- **`optionsWithUsageFile :: FilePath -> IO Options`**
+- **`optionsWithUsageFile :: FilePath -> IO Arguments`**
 
   Most basic options parser. Give it the path to a file with your help text, and it will read the file, build your option parser, and parse your program's options (via `getArgs`). If successful, you get an `Options`, and if not, it will print your help text and fail (hence `IO`).
 
-- **`optionsWithUsageFileDebug :: FilePath -> IO Options`**
+- **`optionsWithUsageFileDebug :: FilePath -> IO Arguments`**
 
   Same as `optionsWithUsageFile`, but prints `ParseError`s if it fails, instead of your help text. Useful if you run into problems parsing options.
 
 ## Queries
 
-- **`getArg :: Monad m => Options -> Expectation -> m String`**
+- **`getArg :: Monad m => Arguments -> Option -> m String`**
 
-  ``opts `getArg` exp`` returns the last value of `exp` specified in the arguments, or the default value (if one is specified), or `fail`s.
+  ``args `getArg` opt`` returns the last value of `opt` specified in the arguments, or the default value (if one is specified), or `fail`s.
 
-- **`isPresent :: Options -> Expectation -> Bool`**
+- **`isPresent :: Arguments -> Option -> Bool`**
 
-  ``opts `isPresent` exp`` returns `True` if `exp` was given in the arguments, else `False`. Useful for use with flags.
+  ``args `isPresent` opt`` returns `True` if `opt` was given in the arguments, else `False`. Useful for use with flags.
 
-- **`getAllArgs :: Options -> Expectation -> [String]`**
+- **`getAllArgs :: Arguments -> Option -> [String]`**
 
-  ``opts `getAllArgs` exp`` returns the list of all occurrences of `exp` in the arguments, in order of last to first given. If none given, returns a singleton list of the default value, if specified. Otherwise returns an empty list. Useful for repeatable elements.
+  ``args `getAllArgs` opt`` returns the list of all occurrences of `opt` in the arguments, in order of last to first given. If none given, returns a singleton list of the default value, if specified. Otherwise returns an empty list. Useful for repeatable elements.
 
-- **`getArgWithDefault :: Options -> String -> Expectation -> String`**
+- **`getArgWithDefault :: Arguments -> String -> Option -> String`**
 
-  ``getArgWithDefault opts "default" exp`` returns what `getArg opts exp` returns if it succeeds, or `"default"` if that fails.
+  ``getArgWithDefault args "default" opt`` returns what `getArg args opt` returns if it succeeds, or `"default"` if that fails.
 
-These are the important basics, though there are others exposed by docopt, located in the `Public` submodule. Examples forthcoming!
+- **`getArgCount :: Arguments -> Option -> Int`**
+
+  ``args `getArgCount` opt`` returns how many values or occurrences were provided in the arguments. This is useful for repeatable arguments, or repeatable options/flags e.g. `prog -vvv`.
+
 
 ----------
 
 #### Differences from reference python implementation:
 
 - does not automatically exclude from the `[options]` shortcut options that are already used elsewhere in the usage pattern (e.g. `usage: prog [options] -a` will try to parse `-a` twice).
-
-- eagerly parses argv in usage-specified order, which means something like `usage: prog [-v | -vv]` will always fail on `prog -vv` (and other similar issues; I think these can all be resolved by intelligently reordering order-insensitive subpatterns, e.g. transforming `prog [-v | -vv]` to `prog [-vv | -v]`).
 
 - does not automatically resolve partially-specified arguments, e.g. `--verb` does not match where `--verbose` is expected. This is planned to be deprecated in future versions of docopt, and will likely not be implemented in docopt.hs
 

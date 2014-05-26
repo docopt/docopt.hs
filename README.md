@@ -44,16 +44,13 @@ main = do
 
 That's it! No Template Haskell, no unreadable syntax, no learning yet *another* finicky API. Write the usage patterns you support, and docopt builds the appropriate option parser for you (internally using [`parsec`](http://hackage.haskell.org/package/parsec)). If your user invokes your program correctly, you query for the arguments they provided. If the arguments provided do not match a supported usage pattern, you guessed it: docopt automatically prints the help text and exits!
 
-----------
 
 Installation
 ------------
 
-For now, installation is manual. Soon this package will be registered on hackage, allowing you to install via:
-
+    cabal sandbox init
     cabal install docopt
 
-----------
 
 Help text format
 ================

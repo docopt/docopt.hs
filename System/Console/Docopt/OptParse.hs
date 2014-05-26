@@ -10,13 +10,11 @@ import System.Console.Docopt.ParseUtils
 import System.Console.Docopt.Types
 
 
--- | The meat and potatoes.
-buildOptParser :: String ->
-                  -- ^ an obscure delimiter with which to intercalate the args list
-                  OptFormat -> 
-                  -- ^ the expected form of the options 
-                  CharParser OptParserState ()
-                  -- ^ a CharParser with which a ParsedArguments (k,v) list can be built
+-- | The meat and potatoes. 
+--   @delim@ is an obscure delimiter with which to intercalate the argv list,
+--   @fmt@ is the OptPattern together with metadata to tell the parser how to parse args.
+--   Together, these let @buildOptParser@ build a parsec parser that can be applied to an argv. 
+buildOptParser :: String -> OptFormat -> CharParser OptParserState ()
 buildOptParser delim fmt@(pattern, infomap) = 
   
   let -- Helpers

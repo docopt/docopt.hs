@@ -1,6 +1,6 @@
 name:                docopt
-version:             0.6.0
-synopsis:            A command-line interface description language and parser that will make you smile
+version:             0.6.0.1
+synopsis:            A command-line interface parser that will make you smile
 description:         Docopt parses command-line interface usage text that adheres to a familiar syntax, and from it builds a command-line argument parser that will ensure your program is invoked correctly with the available options specified in the usage text. This allows the developer to write a usage text and get an argument parser for free.
 
 license:             MIT
@@ -15,6 +15,8 @@ category:            Console
 build-type:          Simple
 cabal-version:       >=1.8
 
+homepage:            https://github.com/docopt/docopt.hs
+bug-reports:         https://github.com/docopt/docopt.hs/issues
 
 library
   exposed-modules:    System.Console.Docopt

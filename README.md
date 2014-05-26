@@ -221,7 +221,7 @@ Option descriptions establish:
 
 - **`optionsWithUsageFile :: FilePath -> IO Arguments`**
 
-  Most basic options parser. Give it the path to a file with your help text, and it will read the file, build your option parser, and parse your program's options (via `getArgs`). If successful, you get an `Options`, and if not, it will print your help text and fail (hence `IO`).
+  Most basic options parser. Give it the path to a file with your help text, and it will read the file, build your option parser, and parse your program's options (via `getArgs`). If successful, you get an `Arguments`, and if not, it will print your help text and fail (hence `IO`).
 
 - **`optionsWithUsageFileDebug :: FilePath -> IO Arguments`**
 

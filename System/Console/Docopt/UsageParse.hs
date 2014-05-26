@@ -3,7 +3,9 @@ module System.Console.Docopt.UsageParse
 
 import           Data.Map (Map)
 import qualified Data.Map as M
-import           Data.List (nub)
+import           Data.Ord (comparing)
+import           GHC.Exts (Down(..))
+import           Data.List (nub, sortBy, maximumBy)
 
 import System.Console.Docopt.ParseUtils
 import System.Console.Docopt.Types
@@ -200,7 +202,7 @@ pDocopt :: CharParser OptInfoMap OptFormat
 pDocopt = do
     optPattern <- pUsagePatterns
     optInfoMap <- pOptDescriptions
-    let optPattern' = expectSynonyms optInfoMap optPattern
+    let optPattern' = eagerSort $ expectSynonyms optInfoMap optPattern
         saveCanRepeat pat el minfo = case minfo of 
           (Just info) -> Just $ info {isRepeated = canRepeat pat el}
           (Nothing)   -> Just $ (fromSynList []) {isRepeated = canRepeat pat el}
@@ -241,3 +243,73 @@ canRepeat pat target =
   where canRepeatInside ps = foldl (||) False $ map ((flip canRepeat) target) ps      
         atomicOccurrences ps = length $ filter (== target) $ atoms $ Sequence ps
 
+
+-- | Compare on specificity of parsers built from optA and optB,
+--   so we can be sure the parser tries the most-specific first, where possible.
+--   E.g.
+--     LongOption "option" > ShortOption 'o' == True
+--     Command "cmd" > Argument "arg"        == True
+compareOptSpecificity :: Option -> Option -> Ordering
+compareOptSpecificity optA optB = case optA of 
+    LongOption a  -> case optB of
+      LongOption b  -> comparingFirst length a b
+      _             -> GT
+    ShortOption a -> case optB of
+      LongOption b  -> LT
+      ShortOption b -> compare a b
+      _             -> GT
+    Command a     -> case optB of 
+      LongOption b  -> LT
+      ShortOption b -> LT
+      Command b     -> comparingFirst length a b
+      _             -> GT
+    Argument a    -> case optB of 
+      AnyOption     -> GT
+      Argument b    -> comparingFirst length a b
+      _             -> LT
+    AnyOption     -> case optB of 
+      AnyOption     -> EQ
+      _             -> LT
+  where 
+    comparingFirst :: (Ord a, Ord b) => (a -> b) -> a -> a -> Ordering
+    comparingFirst p a1 a2 = 
+      case compare (p a1) (p a2) of
+        EQ -> compare a1 a2
+        o  -> o
+
+-- | Sort an OptPattern such that more-specific patterns come first,
+--   while leaving the semantics of the pattern structure unchanged.   
+eagerSort :: OptPattern -> OptPattern
+eagerSort pat = 
+  case pat of
+    Sequence ps  -> Sequence $ map eagerSort ps
+    OneOf ps     -> OneOf $   map eagerSort
+                            . sortBy (comparing $ Down . maxLength) 
+                            . sortBy (comparing representativeAtom)
+                            $ ps
+    Unordered ps -> Unordered $ map eagerSort ps
+    Optional p   -> Optional $ eagerSort p
+    Repeated p   -> Repeated $ eagerSort p 
+    a@(Atom _)   -> a
+  where
+    representativeAtom :: OptPattern -> Option
+    representativeAtom p = case p of
+      Sequence ps  -> if null ps then AnyOption else representativeAtom $ head ps
+      OneOf ps     -> maximumBy compareOptSpecificity . map representativeAtom $ ps
+      Unordered ps -> maximumBy compareOptSpecificity . map representativeAtom $ ps
+      Optional p   -> representativeAtom p
+      Repeated p   -> representativeAtom p
+      Atom a       -> a
+    maxLength :: OptPattern -> Int
+    maxLength p = case p of
+      Sequence ps  -> sum $ map maxLength ps
+      OneOf ps     -> maximum $ map maxLength ps
+      Unordered ps -> sum $ map maxLength ps
+      Optional p   -> maxLength p
+      Repeated p   -> maxLength p
+      Atom a       -> case a of 
+        LongOption o  -> length o
+        ShortOption _ -> 1
+        Command c     -> length c
+        Argument a    -> length a
+        AnyOption     -> 0

@@ -592,7 +592,7 @@ $ prog --aa
 {"--aabb": false, "--aa": true}
 
 $ prog --a
-"user-error"  # not a unique prefix
+"user-error"
 
 #
 # Counting number of flags

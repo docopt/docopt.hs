@@ -62,27 +62,29 @@ buildOptParser delim fmt@(pattern, infomap) =
               p2
   (OneOf pats) ->
       choice $ (try . makeParser) `map` pats
-  (Unordered pats) ->
-      choice $ (parseThisThenRest pats) `map` pats
-      where parseThisThenRest list pat = try $ do
-              makeParser pat
-              let rest = list \\ [pat]
-              argDelimIfNotInShortOptStack
-              makeParser $ Unordered rest
-  (Optional pat) ->
-        case pat of 
-          Unordered ps ->
-            optional $ choice $ (parseThisThenRest ps) `map` ps
+  (Unordered pats) -> case pats of
+      pat:[] -> makeParser pat
+      _ ->  choice $ (parseThisThenRest pats) `map` pats
             where parseThisThenRest list pat = try $ do
                     makeParser pat
                     let rest = list \\ [pat]
                     argDelimIfNotInShortOptStack
-                    makeParser $ Optional $ Unordered rest
+                    makeParser $ Unordered rest
+  (Optional pat) ->
+        case pat of 
+          Unordered ps -> case ps of 
+            p:[] -> makeParser $ Optional p
+            _  -> optional $ choice $ (parseThisThenRest ps) `map` ps
+                  where parseThisThenRest list pat = try $ do
+                          makeParser pat
+                          let rest = list \\ [pat]
+                          argDelimIfNotInShortOptStack
+                          makeParser $ Optional $ Unordered rest
           _ -> optional $ try $ makeParser pat 
   (Repeated pat) -> do
       case pat of 
-        (Optional _) -> (try $ makeParser pat) `sepBy` argDelim
-        _            -> (try $ makeParser pat) `sepBy1` argDelim
+        (Optional p) -> (try $ makeParser p) `sepBy` argDelimIfNotInShortOptStack
+        _            -> (try $ makeParser pat) `sepBy1` argDelimIfNotInShortOptStack
       return ()
   (Atom pat) -> case pat of 
       o@(ShortOption c) ->

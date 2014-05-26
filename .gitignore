@@ -3,6 +3,8 @@
 
 # where Cabal puts binaries and config
 dist
+# local Cabal environment
+cabal-dev
 
 # Haskell compiled files
 *.hi

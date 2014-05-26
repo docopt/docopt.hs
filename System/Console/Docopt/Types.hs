@@ -1,6 +1,7 @@
 module System.Console.Docopt.Types
     where
 
+import           Data.Ord (comparing)
 import           Data.Map (Map)
 import qualified Data.Map as M
 import           Data.List (nub)
@@ -17,7 +18,7 @@ data Pattern a = Sequence [Pattern a]
                | Optional (Pattern a)
                | Repeated (Pattern a)
                | Atom a
-               deriving (Show, Eq, Ord)
+               deriving (Show, Eq)
 
 atoms :: Eq a => Pattern a -> [a]
 atoms (Sequence ps)  = foldl (++) [] $ map atoms ps
@@ -27,10 +28,10 @@ atoms (Optional p)   = atoms p
 atoms (Repeated p)   = atoms p
 atoms (Atom a)       = [a]
 
-data Option = Command Name
-            | Argument Name
-            | LongOption Name
+data Option = LongOption Name
             | ShortOption Char
+            | Command Name
+            | Argument Name
             | AnyOption
             deriving (Show, Eq, Ord)
 
@@ -54,7 +55,7 @@ data OptionInfo = OptionInfo
                   , defaultVal :: Maybe String
                   , expectsVal :: Bool 
                   , isRepeated :: Bool
-                  } deriving (Show, Eq, Ord)
+                  } deriving (Show, Eq)
 
 fromSynList :: [Option] -> OptionInfo
 fromSynList opts = OptionInfo { synonyms = opts

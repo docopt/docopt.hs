@@ -24,20 +24,21 @@ Then, in your `myprog.hs`:
 
 import Control.Monad (when)
 import Data.Char (toUpper)
-import System.Console.Docopt (optionsWithUsageFile, getArg, isPresent)
+import System.Console.Docopt (optionsWithUsageFile, getArg, isPresent, command,
+    argument, longOption)
 
 main = do
   args <- optionsWithUsageFile "USAGE.txt"
 
   when (args `isPresent` (command "cat")) $ do
-    file <- args `getArg` (argument "file")
+    file <- args `getArg` (argument "<file>")
     putStr =<< readFile file
 
-  when (opts `isPresent` (command "echo")) $ do
+  when (args `isPresent` (command "echo")) $ do
     let charTransform = if args `isPresent` (longOption "caps")
                           then toUpper
                           else id
-    string <- args `getArg` (argument "string")
+    string <- args `getArg` (argument "<string>")
     putStrLn $ map charTransform string
 
 ```

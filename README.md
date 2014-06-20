@@ -31,14 +31,14 @@ main = do
   args <- optionsWithUsageFile "USAGE.txt"
 
   when (args `isPresent` (command "cat")) $ do
-    file <- args `getArg` (argument "<file>")
+    file <- args `getArg` (argument "file")
     putStr =<< readFile file
 
   when (args `isPresent` (command "echo")) $ do
     let charTransform = if args `isPresent` (longOption "caps")
                           then toUpper
                           else id
-    string <- args `getArg` (argument "<string>")
+    string <- args `getArg` (argument "string")
     putStrLn $ map charTransform string
 
 ```

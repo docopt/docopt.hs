@@ -93,7 +93,7 @@ pArgument = (try bracketStyle) <|> (try upperStyle)
                       open <- char '<' 
                       name <- many $ oneOf alphanumSpecial
                       close <- char '>'
-                      return $ [open]++name++[close]
+                      return name
                   upperStyle = do 
                       first <- oneOf uppers
                       rest <- many $ oneOf $ uppers ++ numerics

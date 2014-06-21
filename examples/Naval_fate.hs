@@ -16,18 +16,18 @@ main = do
 		putStrLn "Command 'ship'"
 		when (opts `isPresent` (command "new")) $ do
 			putStrLn "  Command 'new'"
-			name <- opts `getAllArgsM` (argument "<name>")
+			name <- opts `getAllArgsM` (argument "name")
 			putStrLn $ "  <name> " ++ show name
 		when (opts `isPresent` (command "shoot")) $ do
 			putStrLn "  Command 'shoot'"
-			x <- (opts `getArg` (argument "<x>"))
+			x <- (opts `getArg` (argument "x"))
 			putStrLn $ "  <x> " ++ show x
-			y <- (opts `getArg` (argument "<y>"))
+			y <- (opts `getArg` (argument "y"))
 			putStrLn $ "  <y> " ++ show y
 		when (opts `isPresent` (command "move")) $ do
-			x <- opts `getArg` (argument "<x>")
-			y <- opts `getArg` (argument "<y>")
-			name <- opts `getArg` (argument "<name>")
+			x <- opts `getArg` (argument "x")
+			y <- opts `getArg` (argument "y")
+			name <- opts `getArg` (argument "name")
 			speed <- opts `getArg` (longOption "speed")
 			putStrLn $ "<name> " ++ show name
 			putStrLn "  Command 'move'"
@@ -41,8 +41,8 @@ main = do
 				putStrLn "  Command 'set'"
 			when (opts `isPresent` (command "remove")) $ do
 				putStrLn "  Command 'remove'"
-			x <- opts `getArg` (argument "<x>")
-			y <- opts `getArg` (argument "<y>")
+			x <- opts `getArg` (argument "x")
+			y <- opts `getArg` (argument "y")
 			putStrLn $ "  <x> " ++ show x		
 			putStrLn $ "  <y> " ++ show y
 		when (opts `isPresent` (command "list")) $ do

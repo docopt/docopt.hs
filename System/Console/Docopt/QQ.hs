@@ -86,8 +86,8 @@ docoptExp usg = do
 -- docopt-sample version 0.1.0
 -- 
 -- Usage:
---   docopt-sample cat <file>
---   docopt-sample echo [--caps] <string>
+--   docopt-sample cat \<file\>
+--   docopt-sample echo [--caps] \<string\>
 -- 
 -- Options:
 --   -c, --caps    Caps-lock the echoed argument

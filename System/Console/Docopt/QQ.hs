@@ -18,8 +18,8 @@
 -- docopt-sample version 0.1.0
 -- 
 -- Usage:
---   docopt-sample cat <file>
---   docopt-sample echo [--caps] <string>
+--   docopt-sample cat \<file\>
+--   docopt-sample echo [--caps] \<string\>
 -- 
 -- Options:
 --   -c, --caps    Caps-lock the echoed argument
@@ -29,15 +29,15 @@
 -- main = do
 --   args <- parseArgs' patterns
 -- 
---   when (args \`isPresent\` (command "cat")) $ do
---     file <- args \`getArg\` (argument "file")
+--   when (args \`isPresent\` (command \"cat\")) $ do
+--     file <- args \`getArg\` (argument \"file\")
 --     putStr =<< readFile file
 -- 
---   when (args \`isPresent\` (command "echo")) $ do
---     let charTransform = if args \`isPresent\` (longOption "caps")
+--   when (args \`isPresent\` (command \"echo\")) $ do
+--     let charTransform = if args \`isPresent\` (longOption \"caps\")
 --                         then toUpper
 --                         else id
---     string <- args \`getArg\` (argument "string")
+--     string <- args \`getArg\` (argument \"string\")
 --     putStrLn $ map charTransform string
 -- @
 module System.Console.Docopt.QQ

@@ -20,6 +20,7 @@ bug-reports:         https://github.com/docopt/docopt.hs/issues
 
 flag template-haskell
   default:      True
+  manual:       True
   description:
     Build System.Console.Docopt.QQ, which requires Template Haskell
 
@@ -37,11 +38,14 @@ library
                       parsec == 3.1.*,
                       containers
 
+  ghc-options:        -Wall -fno-warn-unused-do-bind
+
   if impl(ghc >= 6.10) && flag(template-haskell)
     exposed-modules:  System.Console.Docopt.QQ
     other-modules:    System.Console.Docopt.QQ.Instances
                       System.Console.Docopt.QQ.Util
-    build-depends:    template-haskell == 2.7.*, th-lift == 0.6.*
+    build-depends:    template-haskell >= 2.7 && < 3.0,
+                      th-lift >= 0.7 && < 1.0
 
 test-suite tests
   type:               exitcode-stdio-1.0

@@ -44,15 +44,6 @@ optionsWithUsageDebug usage rawArgs =
             Left err         -> fail $ show err
             Right parsedArgs -> return parsedArgs
 
-optionsWithUsageFile :: FilePath -> IO Arguments
-optionsWithUsageFile path = do usageStr <- readFile path
-                               rawArgs <- getArgs
-                               optionsWithUsage usageStr rawArgs
-
-optionsWithUsageFileDebug :: FilePath -> IO Arguments
-optionsWithUsageFileDebug path = do usageStr <- readFile path
-                                    rawArgs <- getArgs
-                                    optionsWithUsageDebug usageStr rawArgs
 
 -- ** Option lookup functions
 

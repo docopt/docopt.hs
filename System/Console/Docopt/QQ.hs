@@ -41,9 +41,9 @@
 --     putStrLn $ map charTransform string
 -- @
 module System.Console.Docopt.QQ
-
+    (
     -- * QuasiQuoters
-    ( docopt
+      docopt
     , docoptFile
 
     -- * Parsed usage string

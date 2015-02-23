@@ -54,7 +54,7 @@ optionsWithUsageFileDebug path = do usageStr <- readFile path
                                     rawArgs <- getArgs
                                     optionsWithUsageDebug usageStr rawArgs
 
--- ** Option lookup methods
+-- ** Option lookup functions
 
 isPresent :: Arguments -> Option -> Bool
 isPresent args opt = 
@@ -65,12 +65,14 @@ isPresent args opt =
       NotPresent -> False
       _          -> True
 
+{-# DEPRECATED isPresentM "Monadic query functions will soon be removed" #-}
 isPresentM :: Monad m => Arguments -> Option -> m Bool
 isPresentM args o = return $ isPresent args o
 
 notPresent :: Arguments -> Option -> Bool
 notPresent args o = not $ isPresent args o
 
+{-# DEPRECATED notPresentM "Monadic query functions will soon be removed" #-}
 notPresentM :: Monad m => Arguments -> Option -> m Bool
 notPresentM args o = return $ not $ isPresent args o
 
@@ -110,6 +112,7 @@ getAllArgs args opt =
        Value v       -> [v] 
        _             -> []
 
+{-# DEPRECATED getAllArgsM "Monadic query functions will soon be removed" #-}
 getAllArgsM :: Monad m => Arguments -> Option -> m [String]
 getAllArgsM o e = return $ getAllArgs o e
 

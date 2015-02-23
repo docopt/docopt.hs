@@ -22,10 +22,10 @@ flag template-haskell
   default:      True
   manual:       True
   description:
-    Build System.Console.Docopt.QQ, which requires Template Haskell
+    Build with System.Console.Docopt.QQ, which requires Template Haskell
 
 library
-  exposed-modules:    System.Console.Docopt
+  exposed-modules:    System.Console.Docopt.NoTH
 
   other-modules:      System.Console.Docopt.ApplicativeParsec
                       System.Console.Docopt.ParseUtils
@@ -41,8 +41,9 @@ library
   ghc-options:        -Wall -fno-warn-unused-do-bind
 
   if impl(ghc >= 6.10) && flag(template-haskell)
-    exposed-modules:  System.Console.Docopt.QQ
-    other-modules:    System.Console.Docopt.QQ.Instances
+    exposed-modules:  System.Console.Docopt
+    other-modules:    System.Console.Docopt.QQ
+                      System.Console.Docopt.QQ.Instances
                       System.Console.Docopt.QQ.Util
     build-depends:    template-haskell >= 2.7 && < 3.0,
                       th-lift >= 0.7 && < 1.0

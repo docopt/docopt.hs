@@ -41,10 +41,9 @@
 --     putStrLn $ map charTransform string
 -- @
 module System.Console.Docopt.QQ
-    ( module System.Console.Docopt
 
     -- * QuasiQuoters
-    , docopt
+    ( docopt
     , docoptFile
 
     -- * Parsed usage string
@@ -56,11 +55,6 @@ module System.Console.Docopt.QQ
     , parseArgs'
     ) where
 
-import System.Console.Docopt hiding ( optionsWithUsage
-                                    , optionsWithUsageDebug
-                                    , optionsWithUsageFile
-                                    , optionsWithUsageFileDebug
-                                    )
 import System.Console.Docopt.QQ.Util
 import System.Console.Docopt.QQ.Instances ()
 

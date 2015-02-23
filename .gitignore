@@ -8,6 +8,9 @@ cabal.sandbox.config
 
 # Haskell compiled files
 *.hi
+*.o
+*.dyn_hi
+*.dyn_o
 *.p_hi
 *.p_o
 

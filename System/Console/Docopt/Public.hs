@@ -1,4 +1,4 @@
-module System.Console.Docopt.Public 
+module System.Console.Docopt.Public
   (
     -- everything locally declared
     module System.Console.Docopt.Public,
@@ -27,7 +27,7 @@ import System.Console.Docopt.OptParse (getArguments)
 -- ** Main option parsing entry points
 
 optionsWithUsage :: String -> [String] -> IO Arguments
-optionsWithUsage usage rawArgs = 
+optionsWithUsage usage rawArgs =
     case runParser pDocopt M.empty "Usage" usage of
         Left err -> do putStrLn usage
                        exitFailure
@@ -48,7 +48,7 @@ optionsWithUsageDebug usage rawArgs =
 -- ** Option lookup functions
 
 isPresent :: Arguments -> Option -> Bool
-isPresent args opt = 
+isPresent args opt =
   case opt `M.lookup` args of
     Nothing  -> False
     Just val -> case val of
@@ -89,26 +89,26 @@ getFirstArg args opt =
 
 
 getArgWithDefault :: Arguments -> String -> Option -> String
-getArgWithDefault args def opt = 
+getArgWithDefault args def opt =
   case args `getArg` opt of
     Just val -> val
     Nothing -> def
 
 getAllArgs :: Arguments -> Option -> [String]
-getAllArgs args opt = 
+getAllArgs args opt =
   case opt `M.lookup` args of
-     Nothing  -> []
-     Just val -> case val of
-       MultiValue vs -> reverse vs
-       Value v       -> [v] 
-       _             -> []
+    Nothing  -> []
+    Just val -> case val of
+      MultiValue vs -> reverse vs
+      Value v       -> [v]
+      _             -> []
 
 {-# DEPRECATED getAllArgsM "Monadic query functions will soon be removed" #-}
 getAllArgsM :: Monad m => Arguments -> Option -> m [String]
 getAllArgsM o e = return $ getAllArgs o e
 
 getArgCount :: Arguments -> Option -> Int
-getArgCount args opt = 
+getArgCount args opt =
   case opt `M.lookup` args of
     Nothing -> 0
     Just val -> case val of

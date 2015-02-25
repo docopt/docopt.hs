@@ -48,13 +48,13 @@ humanize opt = case opt of
 
 -- | Used when parsing through the available option descriptions.
 --   Holds a list of synonymous options, Maybe a default value (if specified),
---   an expectsVal :: Bool that indicates whether this option is a flag (--flag) 
---   or an option that needs an argument (--opt=arg), and isRepeated :: Bool 
+--   an expectsVal :: Bool that indicates whether this option is a flag (--flag)
+--   or an option that needs an argument (--opt=arg), and isRepeated :: Bool
 --   that indicates whether this option is always single or needs to be accumulated
-data OptionInfo = OptionInfo 
+data OptionInfo = OptionInfo
                   { synonyms :: [Option]
                   , defaultVal :: Maybe String
-                  , expectsVal :: Bool 
+                  , expectsVal :: Bool
                   , isRepeated :: Bool
                   } deriving (Show, Eq)
 
@@ -72,8 +72,8 @@ type OptInfoMap = Map Option OptionInfo
 --   Used to build the actual command-line arg parser.
 type OptFormat = (OptPattern, OptInfoMap)
 
--- | 
-data OptParserState = OptParserState 
+-- |
+data OptParserState = OptParserState
                       { optInfoMap :: OptInfoMap
                       , parsedArgs :: Arguments
                       , inShortOptStack :: Bool
@@ -98,4 +98,3 @@ data ArgValue = MultiValue [String]
 -- | Maps each Option to all of the valued parsed from the command line
 --   (in order of last to first, if multiple values encountered)
 type Arguments = Map Option ArgValue
-

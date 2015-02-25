@@ -9,40 +9,8 @@ module System.Console.Docopt.Public
   )
   where
 
-import System.Environment (getArgs)
-import System.Exit
-
 import Data.Map as M hiding (null)
-
-import Control.Applicative
-
-import System.Console.Docopt.ParseUtils
 import System.Console.Docopt.Types
-import System.Console.Docopt.UsageParse (pDocopt)
-import System.Console.Docopt.OptParse (getArguments)
-
-
--- * Public API
-
--- ** Main option parsing entry points
-
-optionsWithUsage :: String -> [String] -> IO Arguments
-optionsWithUsage usage rawArgs =
-    case runParser pDocopt M.empty "Usage" usage of
-        Left err -> do putStrLn usage
-                       exitFailure
-        Right fmt -> case getArguments fmt rawArgs of
-            Left err         -> do putStrLn usage
-                                   exitFailure
-            Right parsedArgs -> return parsedArgs
-
-optionsWithUsageDebug :: String -> [String] -> IO Arguments
-optionsWithUsageDebug usage rawArgs =
-    case runParser pDocopt M.empty "Usage" usage of
-        Left err  -> fail $ show err
-        Right fmt -> case getArguments fmt rawArgs of
-            Left err         -> fail $ show err
-            Right parsedArgs -> return parsedArgs
 
 
 -- ** Option lookup functions

@@ -1,4 +1,4 @@
-module System.Console.Docopt.OptParse 
+module System.Console.Docopt.OptParse
   where
 
 import Control.Monad (unless)
@@ -10,20 +10,20 @@ import System.Console.Docopt.ParseUtils
 import System.Console.Docopt.Types
 
 
--- | The meat and potatoes. 
+-- | The meat and potatoes.
 --   @delim@ is an obscure delimiter with which to intercalate the argv list,
 --   @fmt@ is the OptPattern together with metadata to tell the parser how to parse args.
---   Together, these let @buildOptParser@ build a parsec parser that can be applied to an argv. 
+--   Together, these let @buildOptParser@ build a parsec parser that can be applied to an argv.
 buildOptParser :: String -> OptFormat -> CharParser OptParserState ()
-buildOptParser delim fmt@(pattern, infomap) = 
-  
+buildOptParser delim fmt@(pattern, infomap) =
+
   let -- Helpers
       argDelim = (try $ string delim) <?> "space between arguments"
-      
+
       makeParser p = buildOptParser delim (p, infomap)
-      
-      argDelimIfNotInShortOptStack = do 
-        st <- getState 
+
+      argDelimIfNotInShortOptStack = do
+        st <- getState
         if not $ inShortOptStack st
           then optional argDelim
           else return ()
@@ -41,20 +41,20 @@ buildOptParser delim fmt@(pattern, infomap) =
       updateSt_assertPresent opt = updateOptWith (\opt info _ -> assertPresent opt info) opt ""
 
       updateSt_inShortOptStack = updateState . updateInShortOptStack
-  
+
   in case pattern of
   (Sequence pats) ->
-      assertTopConsumesAll $ foldl (andThen) (return ()) ps 
+      assertTopConsumesAll $ foldl (andThen) (return ()) ps
       where assertTopConsumesAll p = do
               st <- getState
               if inTopLevelSequence st
-                then do 
+                then do
                   updateState $ \st -> st {inTopLevelSequence = False}
                   p <* eof
-                else p 
+                else p
             inner_pats = (\pat -> (pat, infomap)) `map` pats
             ps = (buildOptParser delim) `map` inner_pats
-            andThen = \p1 p2 -> do 
+            andThen = \p1 p2 -> do
               p1
               argDelimIfNotInShortOptStack
               p2
@@ -69,8 +69,8 @@ buildOptParser delim fmt@(pattern, infomap) =
                     argDelimIfNotInShortOptStack
                     makeParser $ Unordered rest
   (Optional pat) ->
-        case pat of 
-          Unordered ps -> case ps of 
+        case pat of
+          Unordered ps -> case ps of
             p:[] -> makeParser $ Optional p
             _  -> optional $ choice $ (parseThisThenRest ps) `map` ps
                   where parseThisThenRest list pat = try $ do
@@ -78,27 +78,27 @@ buildOptParser delim fmt@(pattern, infomap) =
                           let rest = list \\ [pat]
                           argDelimIfNotInShortOptStack
                           makeParser $ Optional $ Unordered rest
-          _ -> optional $ try $ makeParser pat 
+          _ -> optional $ try $ makeParser pat
   (Repeated pat) -> do
-      case pat of 
+      case pat of
         (Optional p) -> (try $ makeParser p) `sepBy` argDelimIfNotInShortOptStack
         _            -> (try $ makeParser pat) `sepBy1` argDelimIfNotInShortOptStack
       return ()
-  (Atom pat) -> case pat of 
+  (Atom pat) -> case pat of
       o@(ShortOption c) ->
             do  st <- getState
                 if inShortOptStack st then return () else char '-' >> return ()
                 char c
                 updateState $ updateInShortOptStack True
-                val <- if expectsVal $ M.findWithDefault (fromSynList []) o infomap 
-                  then try $ do 
+                val <- if expectsVal $ M.findWithDefault (fromSynList []) o infomap
+                  then try $ do
                     optional $ string "=" <|> argDelim
                     updateState $ updateInShortOptStack False
                     manyTill1 anyChar (lookAhead_ argDelim <|> eof)
                   else do
                     stillInShortStack <- isNotFollowedBy argDelim
-                    unless stillInShortStack $ 
-                      updateState $ updateInShortOptStack False 
+                    unless stillInShortStack $
+                      updateState $ updateInShortOptStack False
                     return ""
                 updateState $ withEachSynonym o $
                               \pa syn info -> saveOccurrence syn info val pa
@@ -106,8 +106,8 @@ buildOptParser delim fmt@(pattern, infomap) =
       o@(LongOption name) ->
             do string "--"
                string name
-               val <- if expectsVal $ M.findWithDefault (fromSynList []) o infomap 
-                 then do 
+               val <- if expectsVal $ M.findWithDefault (fromSynList []) o infomap
+                 then do
                    string "=" <|> argDelim
                    --many (notFollowedBy (string delim) >> anyChar)
                    manyTill1 anyChar (lookAhead_ argDelim <|> eof)
@@ -122,7 +122,7 @@ buildOptParser delim fmt@(pattern, infomap) =
                 --synparsers = oneOf `map` synlists
                 oneOfSyns = map (\ss -> OneOf (map Atom ss)) synlists
                 unorderedSynParser = buildOptParser delim (Unordered oneOfSyns, infomap)
-            in  unorderedSynParser 
+            in  unorderedSynParser
                 <?> humanize o
       o@(Argument name) ->
             do val <- try $ many1 (notFollowedBy argDelim >> anyChar)
@@ -154,7 +154,7 @@ saveOccurrence :: Option -> OptionInfo -> String -> Arguments -> Arguments
 saveOccurrence opt info newval argmap = M.alter updateCurrentVal opt argmap
     where updateCurrentVal m_oldval = case m_oldval of
             Nothing     -> (newval `updateFrom`) =<< (optInitialValue info opt)
-            Just oldval -> newval `updateFrom` oldval 
+            Just oldval -> newval `updateFrom` oldval
           updateFrom newval oldval = Just $ case oldval of
             MultiValue vs -> MultiValue $ newval : vs
             Value v       -> Value newval
@@ -166,42 +166,42 @@ saveOccurrence opt info newval argmap = M.alter updateCurrentVal opt argmap
 assertPresent :: Option -> OptionInfo -> Arguments -> Arguments
 assertPresent opt info argmap = saveOccurrence opt info "" argmap
 
-withEachSynonym :: Option -> 
-                   (Arguments -> Option -> OptionInfo -> Arguments) -> 
-                   OptParserState -> 
+withEachSynonym :: Option ->
+                   (Arguments -> Option -> OptionInfo -> Arguments) ->
+                   OptParserState ->
                    OptParserState
-withEachSynonym opt savefn st = 
+withEachSynonym opt savefn st =
   let infomap = optInfoMap st
       args = parsedArgs st
       syns = synonyms $ M.findWithDefault (fromSynList []) opt infomap
       -- give the savefn each opt's info, as well
-      foldsavefn = \args opt -> 
+      foldsavefn = \args opt ->
                     let info = M.findWithDefault (fromSynList []) opt infomap
-                    in savefn args opt info 
+                    in savefn args opt info
   in st {parsedArgs = foldl foldsavefn args syns}
 
 
 optInitialValue :: OptionInfo -> Option -> Maybe ArgValue
-optInitialValue info opt = 
-  let repeatable = isRepeated info 
+optInitialValue info opt =
+  let repeatable = isRepeated info
   in case opt of
     Command name  -> Just $ if repeatable then Counted 0 else NotPresent
     Argument name -> Just $ if repeatable then MultiValue [] else NoValue
     AnyOption     -> Nothing -- no storable value for [options] shortcut
-    _             -> case expectsVal info of 
+    _             -> case expectsVal info of
       True  -> Just $ if repeatable then MultiValue [] else NoValue
       False -> Just $ if repeatable then Counted 0 else NotPresent
 
 optDefaultValue :: OptionInfo -> Option -> Maybe ArgValue
-optDefaultValue info opt = 
+optDefaultValue info opt =
   let repeatable = isRepeated info
-  in case opt of 
+  in case opt of
     Command name  -> Just $ if repeatable then Counted 0 else NotPresent
     Argument name -> Just $ if repeatable then MultiValue [] else NoValue
     AnyOption     -> Nothing -- no storable value for [options] shortcut
-    _               -> case expectsVal info of 
+    _               -> case expectsVal info of
       True  -> case defaultVal info of
-        Just dval -> Just $ if repeatable 
+        Just dval -> Just $ if repeatable
                             then MultiValue $ reverse $ words dval
                             else Value dval
         Nothing   -> Just $ if repeatable then MultiValue [] else NoValue
@@ -209,15 +209,15 @@ optDefaultValue info opt =
 
 
 getArguments :: OptFormat -> [String] -> Either ParseError Arguments
-getArguments optfmt argv = 
+getArguments optfmt argv =
     let (pattern, infomap) = optfmt
 
         -- delimiter used to flatten argv to parsable String
-        delim = "«»" 
+        delim = "«»"
         argvString = delim `intercalate` argv
 
         p = parsedArgs <$> (returnState $ buildOptParser delim optfmt)
-        
+
         patAtoms = atoms pattern
         infoKeys = (\\ [AnyOption]) $ M.keys infomap
         allAtoms = nub $ patAtoms ++ infoKeys

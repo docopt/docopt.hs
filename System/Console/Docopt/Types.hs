@@ -28,6 +28,7 @@ atoms (Optional p)   = atoms p
 atoms (Repeated p)   = atoms p
 atoms (Atom a)       = [a]
 
+-- | A named leaf node of the usage pattern tree
 data Option = LongOption Name
             | ShortOption Char
             | Command Name

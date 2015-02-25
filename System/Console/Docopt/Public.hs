@@ -1,11 +1,11 @@
 module System.Console.Docopt.Public
   (
-    -- everything locally declared
-    module System.Console.Docopt.Public,
-
     -- public types
     Option(),
     Arguments(),
+
+    -- everything locally declared
+    module System.Console.Docopt.Public,
   )
   where
 
@@ -56,36 +56,28 @@ isPresent args opt =
       NotPresent -> False
       _          -> True
 
-{-# DEPRECATED isPresentM "Monadic query functions will soon be removed" #-}
-isPresentM :: Monad m => Arguments -> Option -> m Bool
-isPresentM args o = return $ isPresent args o
-
 notPresent :: Arguments -> Option -> Bool
 notPresent args o = not $ isPresent args o
 
-{-# DEPRECATED notPresentM "Monadic query functions will soon be removed" #-}
-notPresentM :: Monad m => Arguments -> Option -> m Bool
-notPresentM args o = return $ not $ isPresent args o
-
 getArg :: Monad m => Arguments -> Option -> m String
-getArg args opt = 
+getArg args opt =
   let failure = fail $ "no argument given: " ++ show opt
   in  case opt `M.lookup` args of
         Nothing  -> failure
         Just val -> case val of
           MultiValue (v:vs) -> return v
           Value v           -> return v
-          _                 -> failure          
+          _                 -> failure
 
 getFirstArg :: Monad m => Arguments -> Option -> m String
-getFirstArg args opt = 
+getFirstArg args opt =
   let failure = fail $ "no argument given: " ++ show opt
   in  case opt `M.lookup` args of
         Nothing  -> failure
         Just val -> case val of
           MultiValue vs -> if null vs then failure else return $ last vs
           Value v       -> return v
-          _             -> failure          
+          _             -> failure
 
 
 getArgWithDefault :: Arguments -> String -> Option -> String
@@ -102,10 +94,6 @@ getAllArgs args opt =
       MultiValue vs -> reverse vs
       Value v       -> [v]
       _             -> []
-
-{-# DEPRECATED getAllArgsM "Monadic query functions will soon be removed" #-}
-getAllArgsM :: Monad m => Arguments -> Option -> m [String]
-getAllArgsM o e = return $ getAllArgs o e
 
 getArgCount :: Arguments -> Option -> Int
 getArgCount args opt =
@@ -132,3 +120,17 @@ shortOption c = ShortOption c
 
 longOption :: String -> Option
 longOption s = LongOption s
+
+-- ** Deprecated
+
+{-# DEPRECATED getAllArgsM "Monadic query functions will soon be removed" #-}
+getAllArgsM :: Monad m => Arguments -> Option -> m [String]
+getAllArgsM o e = return $ getAllArgs o e
+
+{-# DEPRECATED notPresentM "Monadic query functions will soon be removed" #-}
+notPresentM :: Monad m => Arguments -> Option -> m Bool
+notPresentM args o = return $ not $ isPresent args o
+
+{-# DEPRECATED isPresentM "Monadic query functions will soon be removed" #-}
+isPresentM :: Monad m => Arguments -> Option -> m Bool
+isPresentM args o = return $ isPresent args o

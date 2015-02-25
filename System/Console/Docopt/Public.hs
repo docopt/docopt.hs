@@ -33,7 +33,7 @@ getArg args opt =
   in  case opt `M.lookup` args of
         Nothing  -> failure
         Just val -> case val of
-          MultiValue (v:vs) -> return v
+          MultiValue (v:_) -> return v
           Value v           -> return v
           _                 -> failure
 

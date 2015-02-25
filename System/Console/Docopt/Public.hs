@@ -37,17 +37,6 @@ getArg args opt =
           Value v           -> return v
           _                 -> failure
 
-getFirstArg :: Monad m => Arguments -> Option -> m String
-getFirstArg args opt =
-  let failure = fail $ "no argument given: " ++ show opt
-  in  case opt `M.lookup` args of
-        Nothing  -> failure
-        Just val -> case val of
-          MultiValue vs -> if null vs then failure else return $ last vs
-          Value v       -> return v
-          _             -> failure
-
-
 getArgWithDefault :: Arguments -> String -> Option -> String
 getArgWithDefault args def opt =
   case args `getArg` opt of
@@ -102,3 +91,14 @@ notPresentM args o = return $ not $ isPresent args o
 {-# DEPRECATED isPresentM "Monadic query functions will soon be removed" #-}
 isPresentM :: Monad m => Arguments -> Option -> m Bool
 isPresentM args o = return $ isPresent args o
+
+{-# DEPRECATED getFirstArg "Use 'getAllArgs' instead" #-}
+getFirstArg :: Monad m => Arguments -> Option -> m String
+getFirstArg args opt =
+  let failure = fail $ "no argument given: " ++ show opt
+  in  case opt `M.lookup` args of
+        Nothing  -> failure
+        Just val -> case val of
+          MultiValue vs -> if null vs then failure else return $ last vs
+          Value v       -> return v
+          _             -> failure

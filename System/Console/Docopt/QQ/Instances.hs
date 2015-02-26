@@ -4,7 +4,6 @@
 module System.Console.Docopt.QQ.Instances where
 
 import System.Console.Docopt.Types
-import System.Console.Docopt.QQ.Util
 import Language.Haskell.TH.Lift
 
 import qualified Data.Map as M

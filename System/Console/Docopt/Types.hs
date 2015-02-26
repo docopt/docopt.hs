@@ -98,3 +98,9 @@ data ArgValue = MultiValue [String]
 -- | Maps each Option to all of the valued parsed from the command line
 --   (in order of last to first, if multiple values encountered)
 type Arguments = Map Option ArgValue
+
+-- | An abstract data type which represents Docopt usage patterns.
+data Docopt = Docopt { optFormat :: OptFormat
+                     -- | Retrieve the original usage string.
+                     , usage :: String
+                     }

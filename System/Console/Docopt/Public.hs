@@ -6,11 +6,15 @@ module System.Console.Docopt.Public
 
     -- everything locally declared
     module System.Console.Docopt.Public,
+
+    -- Parsec's ParseError
+    ParseError,
   )
   where
 
 import Data.Map as M hiding (null)
 import System.Console.Docopt.Types
+import System.Console.Docopt.ApplicativeParsec (ParseError)
 
 
 -- ** Option lookup functions

@@ -52,9 +52,12 @@ module System.Console.Docopt.QQ
 
     -- * Command line arguments parsers
     , parseArgs
-    , parseArgs'
+    , parseArgsOrExit
     ) where
 
+import Control.Applicative ((<$>))
+
+import System.Console.Docopt.Types
 import System.Console.Docopt.QQ.Util
 import System.Console.Docopt.QQ.Instances ()
 

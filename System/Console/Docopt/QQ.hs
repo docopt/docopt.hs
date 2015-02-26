@@ -46,13 +46,13 @@ module System.Console.Docopt.QQ
       docopt
     , docoptFile
 
-    -- * Parsed usage string
-    , Docopt ()
-    , usage
-
     -- * Command line arguments parsers
     , parseArgs
     , parseArgsOrExit
+
+    -- * Parsed usage string
+    , Docopt ()
+    , usage
     , exitWithUsage
     ) where
 

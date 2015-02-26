@@ -1,13 +1,13 @@
 module System.Console.Docopt.Public
   (
-    -- public types
+    -- * Argument lookup
     Option(),
     Arguments(),
 
-    -- everything locally declared
+    -- ** Query functions
     module System.Console.Docopt.Public,
 
-    -- Parsec's ParseError
+    -- ** Re-exported from Parsec
     ParseError,
   )
   where
@@ -16,8 +16,6 @@ import Data.Map as M hiding (null)
 import System.Console.Docopt.Types
 import System.Console.Docopt.ApplicativeParsec (ParseError)
 
-
--- ** Option lookup functions
 
 isPresent :: Arguments -> Option -> Bool
 isPresent args opt =

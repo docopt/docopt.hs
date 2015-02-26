@@ -10,7 +10,24 @@ module System.Console.Docopt.Public
     , Arguments()
 
     -- ** Query functions
-    , module System.Console.Docopt.Public
+    , isPresent
+    , notPresent
+    , getArg
+    , getArgWithDefault
+    , getAllArgs
+    , getArgCount
+
+    -- ** 'Option' constructors
+    , command
+    , argument
+    , shortOption
+    , longOption
+
+    -- ** Deprecated
+    , getAllArgsM
+    , notPresentM
+    , isPresentM
+    , getFirstArg
 
     -- ** Re-exported from Parsec
     , ParseError
@@ -29,6 +46,9 @@ exitWithUsage :: Docopt -> IO a
 exitWithUsage doc = do
   putStr $ usage doc
   exitFailure
+
+-- Query functions
+------------------
 
 isPresent :: Arguments -> Option -> Bool
 isPresent args opt =
@@ -79,7 +99,8 @@ getArgCount args opt =
       _             -> 0
 
 
--- ** Public Option constructor functions
+-- Option constructors
+----------------------
 
 command :: String -> Option
 command s = Command s
@@ -93,7 +114,8 @@ shortOption c = ShortOption c
 longOption :: String -> Option
 longOption s = LongOption s
 
--- ** Deprecated
+-- Deprecated
+-------------
 
 {-# DEPRECATED getAllArgsM "Monadic query functions will soon be removed" #-}
 getAllArgsM :: Monad m => Arguments -> Option -> m [String]

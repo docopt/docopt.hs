@@ -49,11 +49,6 @@ module System.Console.Docopt.QQ
     -- * Command line arguments parsers
     , parseArgs
     , parseArgsOrExit
-
-    -- * Parsed usage string
-    , Docopt ()
-    , usage
-    , exitWithUsage
     ) where
 
 import Control.Applicative ((<$>))

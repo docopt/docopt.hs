@@ -5,11 +5,10 @@ module System.Console.Docopt.QQ.Util
   )
   where
 
-import System.Exit
-
 import System.Console.Docopt.Types
 import System.Console.Docopt.UsageParse
 import System.Console.Docopt.OptParse
+import System.Console.Docopt.Public (exitWithUsage)
 
 import qualified Data.Map as M
 
@@ -25,9 +24,3 @@ parseArgs parser argv = getArguments (optFormat parser) argv
 -- | Same as 'parseArgs', but 'exitWithUsage' on parse failure.
 parseArgsOrExit :: Docopt -> [String] -> IO Arguments
 parseArgsOrExit parser argv = either (const $ exitWithUsage parser) return $ parseArgs parser argv
-
--- | Exit with help message.
-exitWithUsage :: Docopt -> IO a
-exitWithUsage doc = do
-  putStr $ usage doc
-  exitFailure

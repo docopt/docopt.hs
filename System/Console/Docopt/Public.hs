@@ -1,21 +1,34 @@
 module System.Console.Docopt.Public
   (
+    -- * Parsed usage string
+      Docopt ()
+    , usage
+    , exitWithUsage
+
     -- * Argument lookup
-    Option(),
-    Arguments(),
+    , Option()
+    , Arguments()
 
     -- ** Query functions
-    module System.Console.Docopt.Public,
+    , module System.Console.Docopt.Public
 
     -- ** Re-exported from Parsec
-    ParseError,
+    , ParseError
   )
   where
+
+import System.Exit
 
 import Data.Map as M hiding (null)
 import System.Console.Docopt.Types
 import System.Console.Docopt.ApplicativeParsec (ParseError)
 
+
+-- | Exit with help message.
+exitWithUsage :: Docopt -> IO a
+exitWithUsage doc = do
+  putStr $ usage doc
+  exitFailure
 
 isPresent :: Arguments -> Option -> Bool
 isPresent args opt =

@@ -71,15 +71,14 @@ isPresent args opt =
 notPresent :: Arguments -> Option -> Bool
 notPresent args o = not $ isPresent args o
 
-getArg :: Monad m => Arguments -> Option -> m String
+getArg :: Arguments -> Option -> Maybe String
 getArg args opt =
-  let failure = fail $ "no argument given: " ++ show opt
-  in  case opt `M.lookup` args of
-        Nothing  -> failure
-        Just val -> case val of
-          MultiValue (v:_) -> return v
-          Value v           -> return v
-          _                 -> failure
+  case opt `M.lookup` args of
+    Nothing  -> Nothing
+    Just val -> case val of
+      MultiValue (v:_) -> Just v
+      Value v          -> Just v
+      _                -> Nothing
 
 getArgWithDefault :: Arguments -> String -> Option -> String
 getArgWithDefault args def opt =

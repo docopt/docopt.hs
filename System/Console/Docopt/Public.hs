@@ -38,6 +38,7 @@ module System.Console.Docopt.Public
 import System.Exit
 
 import Data.Map as M hiding (null)
+import Data.Maybe (fromMaybe)
 import System.Console.Docopt.Types
 import System.Console.Docopt.ApplicativeParsec (ParseError)
 
@@ -81,10 +82,7 @@ getArg args opt =
       _                -> Nothing
 
 getArgWithDefault :: Arguments -> String -> Option -> String
-getArgWithDefault args def opt =
-  case args `getArg` opt of
-    Just val -> val
-    Nothing -> def
+getArgWithDefault args def opt = fromMaybe def (args `getArg` opt)
 
 getAllArgs :: Arguments -> Option -> [String]
 getAllArgs args opt =

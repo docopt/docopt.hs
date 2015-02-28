@@ -4,6 +4,7 @@ module System.Console.Docopt.Public
       Docopt ()
     , usage
     , exitWithUsage
+    , exitWithUsageMessage
 
     -- * Argument lookup
     , Option()
@@ -41,11 +42,19 @@ import System.Console.Docopt.Types
 import System.Console.Docopt.ApplicativeParsec (ParseError)
 
 
--- | Exit with help message.
+-- | Exit after printing usage text.
 exitWithUsage :: Docopt -> IO a
 exitWithUsage doc = do
   putStr $ usage doc
   exitFailure
+
+-- | Exit after printing a custom message followed by usage text.
+--   Intended for convenience when more context can be given about what went wrong.
+exitWithUsageMessage :: Docopt -> String -> IO a
+exitWithUsageMessage doc msg = do
+  putStrLn msg
+  putStrLn ""
+  exitWithUsage doc
 
 -- Query functions
 ------------------

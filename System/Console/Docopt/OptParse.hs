@@ -213,6 +213,7 @@ getArguments optfmt argv =
     let (pattern, infomap) = optfmt
 
         -- delimiter used to flatten argv to parsable String
+        -- TODO: parse argv without a nasty intercalate hack
         delim = "«»"
         argvString = delim `intercalate` argv
 

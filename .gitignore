@@ -17,3 +17,6 @@ cabal.sandbox.config
 # Sublime Text files
 *.sublime-project
 *.sublime-workspace
+
+# extra
+tmp

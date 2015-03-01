@@ -2,30 +2,32 @@ module NavalFate.Shared where
 
 import System.Console.Docopt
 import System.Exit
-import Control.Monad (when, unless)
+import Control.Monad (when)
 
-navalFateDispatchArgs :: Arguments -> IO ()
-navalFateDispatchArgs opts = do
-  print opts
-  putStrLn ""
+navalFateDispatchArgs :: Docopt -> Arguments -> IO ()
+navalFateDispatchArgs doc opts = do
+  -- print opts
+  -- putStrLn ""
+
+  let getArgOrExit = getArgOrExitWith doc
 
   when (opts `isPresent` (command "ship")) $ do
     putStrLn "Command 'ship'"
     when (opts `isPresent` (command "new")) $ do
       putStrLn "  Command 'new'"
-      name <- opts `getAllArgsM` (argument "name")
+      let name = opts `getAllArgs` (argument "name")
       putStrLn $ "  <name> " ++ show name
     when (opts `isPresent` (command "shoot")) $ do
       putStrLn "  Command 'shoot'"
-      x <- (opts `getArg` (argument "x"))
+      x <- (opts `getArgOrExit` (argument "x"))
       putStrLn $ "  <x> " ++ show x
-      y <- (opts `getArg` (argument "y"))
+      y <- (opts `getArgOrExit` (argument "y"))
       putStrLn $ "  <y> " ++ show y
     when (opts `isPresent` (command "move")) $ do
-      x <- opts `getArg` (argument "x")
-      y <- opts `getArg` (argument "y")
-      name <- opts `getArg` (argument "name")
-      speed <- opts `getArg` (longOption "speed")
+      x <- opts `getArgOrExit` (argument "x")
+      y <- opts `getArgOrExit` (argument "y")
+      name <- opts `getArgOrExit` (argument "name")
+      speed <- opts `getArgOrExit` (longOption "speed")
       putStrLn $ "<name> " ++ show name
       putStrLn "  Command 'move'"
       putStrLn $ "  <x> " ++ show x
@@ -38,8 +40,8 @@ navalFateDispatchArgs opts = do
         putStrLn "  Command 'set'"
       when (opts `isPresent` (command "remove")) $ do
         putStrLn "  Command 'remove'"
-      x <- opts `getArg` (argument "x")
-      y <- opts `getArg` (argument "y")
+      x <- opts `getArgOrExit` (argument "x")
+      y <- opts `getArgOrExit` (argument "y")
       putStrLn $ "  <x> " ++ show x
       putStrLn $ "  <y> " ++ show y
     when (opts `isPresent` (command "list")) $ do
@@ -54,4 +56,4 @@ navalFateDispatchArgs opts = do
   when (opts `isPresent` (longOption "version")) $ do
     putStrLn "Naval Fate v0.0.0.0.0.1.0"
   when (opts `isPresent` (longOption "help")) $ do
-    putStrLn =<< readFile "naval_fate.USAGE.txt"
+    exitWithUsage doc

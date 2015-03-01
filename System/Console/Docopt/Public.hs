@@ -1,7 +1,14 @@
 module System.Console.Docopt.Public
   (
+    -- * Command line arguments parsers
+      parseArgs
+    , parseArgsOrExit
+
+    -- *** Re-exported from Parsec
+    , ParseError
+
     -- * Parsed usage string
-      Docopt ()
+    , Docopt ()
     , usage
     , exitWithUsage
     , exitWithUsageMessage
@@ -29,9 +36,6 @@ module System.Console.Docopt.Public
     , notPresentM
     , isPresentM
     , getFirstArg
-
-    -- ** Re-exported from Parsec
-    , ParseError
   )
   where
 
@@ -41,7 +45,16 @@ import Data.Map as M hiding (null)
 import Data.Maybe (fromMaybe)
 import System.Console.Docopt.Types
 import System.Console.Docopt.ApplicativeParsec (ParseError)
+import System.Console.Docopt.OptParse
 
+
+-- | Parse command line arguments.
+parseArgs :: Docopt -> [String] -> Either ParseError Arguments
+parseArgs parser = getArguments (optFormat parser)
+
+-- | Same as 'parseArgs', but 'exitWithUsage' on parse failure.
+parseArgsOrExit :: Docopt -> [String] -> IO Arguments
+parseArgsOrExit parser argv = either (const $ exitWithUsage parser) return $ parseArgs parser argv
 
 -- | Exit after printing usage text.
 exitWithUsage :: Docopt -> IO a
@@ -109,16 +122,16 @@ getArgCount args opt =
 ----------------------
 
 command :: String -> Option
-command s = Command s
+command = Command
 
 argument :: String -> Option
-argument s = Argument s
+argument = Argument
 
 shortOption :: Char -> Option
-shortOption c = ShortOption c
+shortOption = ShortOption
 
 longOption :: String -> Option
-longOption s = LongOption s
+longOption = LongOption
 
 -- Deprecated
 -------------

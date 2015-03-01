@@ -44,7 +44,6 @@ library
     exposed-modules:  System.Console.Docopt
     other-modules:    System.Console.Docopt.QQ
                       System.Console.Docopt.QQ.Instances
-                      System.Console.Docopt.QQ.Util
     build-depends:    template-haskell >= 2.7 && < 3.0,
                       th-lift >= 0.7 && < 1.0
 

@@ -45,20 +45,20 @@ module System.Console.Docopt.QQ
     -- * QuasiQuoters
       docopt
     , docoptFile
-
-    -- * Command line arguments parsers
-    , parseArgs
-    , parseArgsOrExit
     ) where
 
-import Control.Applicative ((<$>))
+import qualified Data.Map as M
 
 import System.Console.Docopt.Types
-import System.Console.Docopt.QQ.Util
 import System.Console.Docopt.QQ.Instances ()
+import System.Console.Docopt.ApplicativeParsec
+import System.Console.Docopt.UsageParse
 
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote
+
+parseFmt :: FilePath -> String -> Either ParseError OptFormat
+parseFmt = runParser pDocopt M.empty
 
 docoptExp :: String -> Q Exp
 docoptExp usg = do

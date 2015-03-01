@@ -21,6 +21,7 @@ module System.Console.Docopt.Public
     , isPresent
     , notPresent
     , getArg
+    , getArgOrExitWith
     , getArgWithDefault
     , getAllArgs
     , getArgCount
@@ -93,6 +94,10 @@ getArg args opt =
       MultiValue (v:_) -> Just v
       Value v          -> Just v
       _                -> Nothing
+
+getArgOrExitWith :: Docopt -> Arguments -> Option -> IO String
+getArgOrExitWith doc args opt = exitUnless $ getArg args opt
+  where exitUnless = maybe (exitWithUsageMessage doc $ "argument expected for: " ++ show opt) return
 
 getArgWithDefault :: Arguments -> String -> Option -> String
 getArgWithDefault args def opt = fromMaybe def (args `getArg` opt)

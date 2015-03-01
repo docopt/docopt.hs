@@ -1,48 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_HADDOCK prune #-}
--- | Template Haskell 'QuasiQuoter's which enable compile time parsing
--- of usage strings.
---
--- Example:
---
--- @
--- {-\# LANGUAGE QuasiQuotes \#-}
--- module Main where
---
--- import Control.Monad (when)
--- import Data.Char (toUpper)
--- import System.Console.Docopt.QQ
---
--- patterns :: Docopt
--- patterns = [docopt|
--- docopt-sample version 0.1.0
---
--- Usage:
---   docopt-sample cat \<file\>
---   docopt-sample echo [--caps] \<string\>
---
--- Options:
---   -c, --caps    Caps-lock the echoed argument
--- |]
---
--- main :: IO ()
--- main = do
---   args <- parseArgs' patterns
---
---   when (args \`isPresent\` (command \"cat\")) $ do
---     file <- args \`getArg\` (argument \"file\")
---     putStr =<< readFile file
---
---   when (args \`isPresent\` (command \"echo\")) $ do
---     let charTransform = if args \`isPresent\` (longOption \"caps\")
---                         then toUpper
---                         else id
---     string <- args \`getArg\` (argument \"string\")
---     putStrLn $ map charTransform string
--- @
 module System.Console.Docopt.QQ
     (
-    -- * QuasiQuoters
+    -- * QuasiQuoter usage parsers
       docopt
     , docoptFile
     ) where
@@ -86,6 +46,9 @@ docoptExp usg = do
 --   -c, --caps    Caps-lock the echoed argument
 -- |]
 -- @
+--
+-- For help with the docopt usage format, see
+-- <https://github.com/docopt/docopt.hs/blob/master/README.md#help-text-format the readme on github>.
 docopt :: QuasiQuoter
 docopt = QuasiQuoter { quoteExp  = docoptExp
                      , quoteDec  = unsupported "Declaration"
@@ -105,6 +68,6 @@ docopt = QuasiQuoter { quoteExp  = docoptExp
 -- @
 --
 -- where @USAGE@ is the name of a file which contains the usage
--- string.
+-- string (relative to the directory from which ghc is invoked).
 docoptFile :: QuasiQuoter
 docoptFile = quoteFile docopt

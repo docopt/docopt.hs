@@ -1,6 +1,6 @@
 module System.Console.Docopt.NoTH
   (
-    -- * Public API
+    -- * Usage parsers
       parseUsage
     , parseUsageOrExit
 
@@ -18,6 +18,9 @@ import System.Console.Docopt.UsageParse (pDocopt)
 
 
 -- | Parse docopt-formatted usage patterns.
+--
+--   For help with the docopt usage format, see
+--   <https://github.com/docopt/docopt.hs/blob/master/README.md#help-text-format the readme on github>.
 parseUsage :: String -> Either ParseError Docopt
 parseUsage usg =
   case runParser pDocopt M.empty "Usage" usg of

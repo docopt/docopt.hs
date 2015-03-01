@@ -17,12 +17,17 @@ import System.Console.Docopt.ParseUtils
 import System.Console.Docopt.UsageParse (pDocopt)
 
 
+-- | Parse docopt-formatted usage patterns.
 parseUsage :: String -> Either ParseError Docopt
 parseUsage usg =
   case runParser pDocopt M.empty "Usage" usg of
     Left e       -> Left e
     Right optfmt -> Right (Docopt optfmt usg)
 
+-- | Same as 'parseUsage', but 'exitWithUsage' on parse failure. E.g.
+--
+-- > let usageStr = "Usage:\n  prog [--option]\n"
+-- > patterns <- parseUsageOrExit usageStr
 parseUsageOrExit :: String -> IO Docopt
 parseUsageOrExit usg = exitUnless $ parseUsage usg
   where

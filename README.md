@@ -18,29 +18,30 @@ Save your help text to a file (i.e. `USAGE.txt`):
     Options:
       -c, --caps    Caps-lock the echoed argument
 
-Then, in your `myprog.hs`:
+Then, in your `Myprog.hs`:
     
 ```haskell
-
+{-# LANGUAGE QuasiQuotes #-}
 import Control.Monad (when)
 import Data.Char (toUpper)
-import System.Console.Docopt (optionsWithUsageFile, getArg, isPresent, command,
-    argument, longOption)
+import System.Console.Docopt
+
+patterns :: Docopt
+patterns = [docoptFile|USAGE.txt|]
 
 main = do
-  args <- optionsWithUsageFile "USAGE.txt"
+  args <- parseArgsOrExit patterns =<< getArgs
 
   when (args `isPresent` (command "cat")) $ do
-    file <- args `getArg` (argument "file")
+    file <- args `getArgOrExit` (argument "file")
     putStr =<< readFile file
 
   when (args `isPresent` (command "echo")) $ do
     let charTransform = if args `isPresent` (longOption "caps")
                           then toUpper
                           else id
-    string <- args `getArg` (argument "string")
+    string <- args `getArgOrExit` (argument "string")
     putStrLn $ map charTransform string
-
 ```
 
 That's it! No Template Haskell, no unreadable syntax, no learning yet *another* finicky API. Write the usage patterns you support, and docopt builds the appropriate option parser for you (internally using [`parsec`](http://hackage.haskell.org/package/parsec)). If your user invokes your program correctly, you query for the arguments they provided. If the arguments provided do not match a supported usage pattern, you guessed it: docopt automatically prints the help text and exits!
@@ -51,6 +52,11 @@ Installation
 
     cabal sandbox init
     cabal install docopt
+
+API Reference
+-------------
+
+See [the package on hackage](https://hackage.haskell.org/package/docopt)
 
 
 Help text format
@@ -194,66 +200,11 @@ Option descriptions establish:
 
 ----------------
 
-## Types
-
-- **`Arguments`**
-
-  This is the object you receive when docopt has successfully parsed your help text *and* the arguments passed to your program. 
-
-- **`Option`**
-
-  This is the data type for individual elements of your usage patterns.
-
-  Constructors:
-
-  ```
-  command        ==>  command "command"
-  <argument>     ==>  argument "argument"
-  --flag         ==>  longOption "flag"`
-  --option=ARG   ==>  longOption "option"
-  -c             ==>  shortOption 'c'`
-  -c ARG         ==>  shortOption 'c'
-  ```
-
-## Option parsing
-
-- **`optionsWithUsageFile :: FilePath -> IO Arguments`**
-
-  Most basic options parser. Give it the path to a file with your help text, and it will read the file, build your option parser, and parse your program's options (via `getArgs`). If successful, you get an `Arguments`, and if not, it will print your help text and fail (hence `IO`).
-
-- **`optionsWithUsageFileDebug :: FilePath -> IO Arguments`**
-
-  Same as `optionsWithUsageFile`, but prints `ParseError`s if it fails, instead of your help text. Useful if you run into problems parsing options.
-
-## Queries
-
-- **`getArg :: Monad m => Arguments -> Option -> m String`**
-
-  ``args `getArg` opt`` returns the last value of `opt` specified in the arguments, or the default value (if one is specified), or `fail`s.
-
-- **`isPresent :: Arguments -> Option -> Bool`**
-
-  ``args `isPresent` opt`` returns `True` if `opt` was given in the arguments, else `False`. Useful for use with flags.
-
-- **`getAllArgs :: Arguments -> Option -> [String]`**
-
-  ``args `getAllArgs` opt`` returns the list of all occurrences of `opt` in the arguments, in order of last to first given. If none given, returns a singleton list of the default value, if specified. Otherwise returns an empty list. Useful for repeatable elements.
-
-- **`getArgWithDefault :: Arguments -> String -> Option -> String`**
-
-  ``getArgWithDefault args "default" opt`` returns what `getArg args opt` returns if it succeeds, or `"default"` if that fails.
-
-- **`getArgCount :: Arguments -> Option -> Int`**
-
-  ``args `getArgCount` opt`` returns how many values or occurrences were provided in the arguments. This is useful for repeatable arguments, or repeatable options/flags e.g. `prog -vvv`.
-
-
-----------
 
 #### Differences from reference python implementation:
 
-- does not automatically exclude from the `[options]` shortcut options that are already used elsewhere in the usage pattern (e.g. `usage: prog [options] -a` will try to parse `-a` twice).
+  - does not automatically exclude from the `[options]` shortcut options that are already used elsewhere in the usage pattern (e.g. `usage: prog [options] -a` will try to parse `-a` twice).
 
-- does not automatically resolve partially-specified arguments, e.g. `--verb` does not match where `--verbose` is expected. This is planned to be deprecated in future versions of docopt, and will likely not be implemented in docopt.hs
+  - does not automatically resolve partially-specified arguments, e.g. `--verb` does not match where `--verbose` is expected. This is planned to be deprecated in future versions of docopt, and will likely not be implemented in docopt.hs
 
-- is not insensitive to the ordering of adjacent options, e.g. `usage: prog -a -b` does not allow `prog -b -a` (reference implementation currently does).
+  - is not insensitive to the ordering of adjacent options, e.g. `usage: prog -a -b` does not allow `prog -b -a` (reference implementation currently does).

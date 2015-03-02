@@ -6,6 +6,7 @@
 --
 -- import Control.Monad (when)
 -- import Data.Char (toUpper)
+-- import System.Environment (getArgs)
 -- import System.Console.Docopt
 --
 -- patterns :: Docopt
@@ -20,9 +21,11 @@
 --   -c, --caps    Caps-lock the echoed argument
 -- |]
 --
+-- getArgOrExit = getArgOrExitWith patterns
+--
 -- main :: IO ()
 -- main = do
---   args <- parseArgsOrExit patterns
+--   args <- parseArgsOrExit patterns =<< getArgs
 --
 --   when (args \`isPresent\` (command \"cat\")) $ do
 --     file <- args \`getArgOrExit\` (argument \"file\")

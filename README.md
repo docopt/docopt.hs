@@ -24,10 +24,13 @@ Then, in your `Myprog.hs`:
 {-# LANGUAGE QuasiQuotes #-}
 import Control.Monad (when)
 import Data.Char (toUpper)
+import System.Environment (getArgs)
 import System.Console.Docopt
 
 patterns :: Docopt
 patterns = [docoptFile|USAGE.txt|]
+
+getArgOrExit = getArgOrExitWith patterns
 
 main = do
   args <- parseArgsOrExit patterns =<< getArgs

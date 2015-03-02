@@ -1,5 +1,5 @@
 name:                docopt
-version:             0.6.0.2
+version:             0.7.0.0
 synopsis:            A command-line interface parser that will make you smile
 description:         Docopt parses command-line interface usage text that adheres to a familiar syntax, and from it builds a command-line argument parser that will ensure your program is invoked correctly with the available options specified in the usage text. This allows the developer to write a usage text and get an argument parser for free.
 

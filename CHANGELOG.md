@@ -1,3 +1,7 @@
+### 0.7.0.1
+
+- Fix docs in README and in Docopt.hs
+
 # 0.7.0.0
 
 - Add usage parsing QuasiQuoters [#7]

@@ -7,9 +7,8 @@ license:             MIT
 license-file:        LICENSE.txt
 author:              Ryan Artecona
 maintainer:          ryanartecona@gmail.com
-copyright:           (c) 2013 Ryan Artecona
+copyright:           (c) 2013-2015 Ryan Artecona
 
-stability:           Experimental
 category:            Console
 
 build-type:          Simple
@@ -18,11 +17,14 @@ cabal-version:       >=1.8
 homepage:            https://github.com/docopt/docopt.hs
 bug-reports:         https://github.com/docopt/docopt.hs/issues
 
+extra-source-files:  README.md
+                     CHANGELOG.md
+
 flag template-haskell
   default:      True
   manual:       True
   description:
-    Build with System.Console.Docopt.QQ, which requires Template Haskell
+    Build with QuasiQuoter usage parsers, which requires Template Haskell
 
 library
   exposed-modules:    System.Console.Docopt.NoTH

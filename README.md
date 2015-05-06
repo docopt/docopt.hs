@@ -92,17 +92,17 @@ Docopt only cares about 2 parts of your help text:
 Usage Patterns
 --------------
 
-- #### `<argument>`
+- #### `<argument>` or `ARGUMENT`
 
-  Positional arguments. Constructed via `argument`, i.e. `argument "arg"` matches an `<arg>` element in the help text.
+  Positional arguments. Constructed via `argument`, i.e. `argument "arg"` matches an `<arg>` element in the help text, and `argument "ARG"` matches an `ARG` element.
 
 - #### `--flag` or `--option=<arg>`
 
-  Options are typically optional (though this is up to you), and can be either boolean (present/absent), as in `--flag`, or expect a trailing argument, as in `--option=<arg>`. Arguments can be separated from the option name by an `=` or a single space, and can be in `<arg>` form or `ARG` form (though consistency of style is recommended, it is not enforced). 
+  Options are typically optional (though this is up to you), and can be either boolean (present/absent), as in `--flag`, or expect a trailing argument, as in `--option=<arg>` or `--option=ARG`. Arguments can be separated from the option name by an `=` or a single space, and can be in `<arg>` form or `ARG` form (though consistency of style is recommended, it is not enforced). 
 
   Short-style options, as in `-f` or `-f ARG`, are also allowed. Synonyms between different spellings of the same option (e.g. `-v` and `--verbose`) can be established in the option descriptions (see below). Short-style options can also be stacked, as in `-rfA`. When options are stacked, `-rfA` is effectively equivalent to `(-r | -f | -A)...` to the argument parser.
 
-  You can match a long-style option `--flag` with `longOption "flag"`, and a short-style option `-f` with `shortOption 'f'` The same constructor is used whether the option expects an argument or not.
+  You can match a long-style option `--flag` with `longOption "flag"`, and a short-style option `-f` with `shortOption 'f'` The same constructor is used whether the option expects an argument or not, e.g. `--option=<arg>` would be matched by `longOption "option"`.
 
 - #### `command`
 

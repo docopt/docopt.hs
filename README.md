@@ -11,7 +11,7 @@ How about writing your help text first, and getting a parser for free!
 
 Save your help text to a file (i.e. `USAGE.txt`):
 
-    Usage: 
+    Usage:
       myprog cat <file>
       myprog echo [--caps] <string>
 
@@ -19,7 +19,7 @@ Save your help text to a file (i.e. `USAGE.txt`):
       -c, --caps    Caps-lock the echoed argument
 
 Then, in your `Myprog.hs`:
-    
+
 ```haskell
 {-# LANGUAGE QuasiQuotes #-}
 import Control.Monad (when)
@@ -66,22 +66,22 @@ Help text format
 ================
 
 Docopt only cares about 2 parts of your help text:
- 
+
 - **Usage patterns**, e.g.:
 
   ```
-      Usage: 
+      Usage:
         my_program [-hs] [-o=<file>] [--quiet | --verbose] [<input>...]
   ```
-  These begin with `Usage:` (case-insensitive), and end with a blank line. 
+  These begin with `Usage:` (case-insensitive), and end with a blank line.
 
-- **Option descriptions**, e.g.: 
+- **Option descriptions**, e.g.:
 
   ```
       Options:
         -h --help    show this
         -s --sorted  sorted output
-        -o=<file>    specify output file 
+        -o=<file>    specify output file
                      [default: ./test.txt]
         --quiet      print less text
         --verbose    print more text
@@ -98,15 +98,15 @@ Usage Patterns
 
 - #### `--flag` or `--option=<arg>`
 
-  Options are typically optional (though this is up to you), and can be either boolean (present/absent), as in `--flag`, or expect a trailing argument, as in `--option=<arg>` or `--option=ARG`. Arguments can be separated from the option name by an `=` or a single space, and can be in `<arg>` form or `ARG` form (though consistency of style is recommended, it is not enforced). 
+  Options are typically optional (though this is up to you), and can be either boolean (present/absent), as in `--flag`, or expect a trailing argument, as in `--option=<arg>` or `--option=ARG`. Arguments can be separated from the option name by an `=` or a single space, and can be specified as `<arg>` or `ARG` (consistency of style is recommended, but it is not enforced).
 
-  Short-style options, as in `-f` or `-f ARG`, are also allowed. Synonyms between different spellings of the same option (e.g. `-v` and `--verbose`) can be established in the option descriptions (see below). Short-style options can also be stacked, as in `-rfA`. When options are stacked, `-rfA` is effectively equivalent to `(-r | -f | -A)...` to the argument parser.
+  Short-style options, as in `-f` or `-f ARG` or `-f=<arg>`, are also allowed. Synonyms between different spellings of the same option (e.g. `-v` and `--verbose`) can be established in the option descriptions (see below). Short-style options can also be stacked, as in `-rfA`. When options are stacked, `-rfA` is effectively equivalent to `(-r | -f | -A)...` to the argument parser.
 
-  You can match a long-style option `--flag` with `longOption "flag"`, and a short-style option `-f` with `shortOption 'f'` The same constructor is used whether the option expects an argument or not, e.g. `--option=<arg>` would be matched by `longOption "option"`.
+  You can match a long-style option `--flag` with `longOption "flag"`, and a short-style option `-f` with `shortOption 'f'`. The same constructor is used whether the option expects an argument or not, e.g. `--option=<arg>` would be matched by `longOption "option"`.
 
 - #### `command`
 
-  Anything not recognized as a positional argument or a short or long option is treated as a command (or subcommand, same thing to docopt). A command named `pull` can be matched with `command "pull"`. 
+  Anything not recognized as a positional argument or a short or long option is treated as a command (or subcommand, same thing to docopt). A command named `pull` can be matched with `command "pull"`.
 
 - #### `[]` (brackets) e.g. `command [--option]`
 
@@ -118,7 +118,7 @@ Usage Patterns
 
 - #### `|` (pipe) e.g. `command [--quiet | --verbose]`
 
-  A pipe `|` separates mutually elements in a group. A group could be elements inside `[]`, `()`, or the whole usage line. 
+  A pipe `|` separates mutually elements in a group. A group could be elements inside `[]`, `()`, or the whole usage line.
 
   ```
       Usage:
@@ -139,7 +139,7 @@ Usage Patterns
 
 - #### `[-]` and `[--]`
 
-  Single hyphen `-` is used by convention to specify using `stdin` as input instead of reading a file. Double hyphen `--` is typically used to manually separate leading options from trailing positional arguments. Both of these are treated as `command`s, and so are perfectly legal in usage patterns. They are typically optional elements, but can be required if you drop the `[]`. 
+  Single hyphen `-` is used by convention to specify using `stdin` as input instead of reading a file. Double hyphen `--` is typically used to manually separate leading options from trailing positional arguments. Both of these are treated as `command`s, and so are perfectly legal in usage patterns. They are typically optional elements, but can be required if you drop the `[]`.
 
 Option descriptions
 -------------------
@@ -152,7 +152,7 @@ Option descriptions establish:
 **Rules**:
 
 - Any line *after* the usage patterns whose first non-space character is a `-` is treated as an option description. (`Options:` prefix line not required).
-      
+
   ```
       Options: --help       # invalid: line does not start with '-'
                --verbose    # good
@@ -164,9 +164,9 @@ Option descriptions establish:
       Usage:
         myprog --help | --verbose
 
-      Options: 
+      Options:
         -h, --help      Print help text
-        -v --verbose    Print help text twice 
+        -v --verbose    Print help text twice
   ```
 
   Here, `myprog --help` and `myprog -h` will both work the same, as will `myprog --verbose` and `myprog -v`.
@@ -189,7 +189,7 @@ Option descriptions establish:
       --opt1 ARG1   Option 1.
       --opt2=<arg2> Option 2.        # BAD: use 2 spaces
       -a <arg3>     Option 3.
-      -b=ARG4       Option 4. 
+      -b=ARG4       Option 4.
   ```
 
 - Options that expect arguments can be given a default value, in the form `[default: <default-val>]`. Default values do not need to be on the same line
@@ -197,7 +197,7 @@ Option descriptions establish:
   ```
       --host=NAME       Host to listen on. [default: localhost]
       --port=PORT       Port number [default: 8080]
-      --directory=DIR   This option has an especially long description 
+      --directory=DIR   This option has an especially long description
                         explaining its meaning. [default: ./]
   ```
 

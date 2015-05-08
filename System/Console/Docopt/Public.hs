@@ -153,14 +153,20 @@ command :: String -> Option
 command = Command
 
 -- | For @Usage: prog \<file\>@, ask for @argument \"file\"@.
+--
+--   __Note:__ A @Usage: prog --output=\<file\>@ is /not/ matched by @argument \"file\"@. See 'longOption'.
 argument :: String -> Option
 argument = Argument
 
 -- | For @Usage: prog -h@, ask for @shortOption \'h\'@.
+--
+--   For @Usage: prog -o=\<file\>@, ask for @shortOption \'o\'@.
 shortOption :: Char -> Option
 shortOption = ShortOption
 
--- | For @Usage: prog --version@, ask for @shortOption \"version\"@.
+-- | For @Usage: prog --version@, ask for @longOption \"version\"@.
+--
+--   For @Usage: prog --output=\<file\>@, ask for @longOption \"output\"@.
 longOption :: String -> Option
 longOption = LongOption
 

@@ -1,3 +1,7 @@
+### 0.7.0.2
+
+- Minor docs/README tweaks [#13]
+
 ### 0.7.0.1
 
 - Fix docs in README and in Docopt.hs

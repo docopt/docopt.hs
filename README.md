@@ -102,7 +102,7 @@ Usage Patterns
 
   Short-style options, as in `-f` or `-f ARG` or `-f=<arg>`, are also allowed. Synonyms between different spellings of the same option (e.g. `-v` and `--verbose`) can be established in the option descriptions (see below). Short-style options can also be stacked, as in `-rfA`. When options are stacked, `-rfA` is effectively equivalent to `(-r | -f | -A)...` to the argument parser.
 
-  You can match a long-style option `--flag` with `longOption "flag"`, and a short-style option `-f` with `shortOption 'f'`. The same constructor is used whether the option expects an argument or not, e.g. `--option=<arg>` would be matched by `longOption "option"`.
+  You can match a long-style option `--option` or `--option=<arg>` with `longOption "option"`, and a short-style option `-f` `or -f=<arg>` with `shortOption 'f'`. _Note that neither `--option=<arg>` nor `-f=<arg>` would be matched by `argument "arg"`._
 
 - #### `command`
 
@@ -118,7 +118,7 @@ Usage Patterns
 
 - #### `|` (pipe) e.g. `command [--quiet | --verbose]`
 
-  A pipe `|` separates mutually elements in a group. A group could be elements inside `[]`, `()`, or the whole usage line.
+  A pipe `|` separates mutually exclusive elements in a group. A group could be elements inside `[]`, `()`, or the whole usage line.
 
   ```
       Usage:

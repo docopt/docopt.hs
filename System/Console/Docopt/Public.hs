@@ -84,9 +84,11 @@ isPresent args opt =
   case opt `M.lookup` args of
     Nothing  -> False
     Just val -> case val of
-      NoValue    -> False
-      NotPresent -> False
-      _          -> True
+      NoValue       -> False
+      NotPresent    -> False
+      Counted 0     -> False
+      MultiValue [] -> False
+      _             -> True
 
 notPresent :: Arguments -> Option -> Bool
 notPresent = (not .) . isPresent

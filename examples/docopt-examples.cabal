@@ -24,3 +24,11 @@ executable naval-fate-no-th
                        docopt
   ghc-options:         -Wall
   default-language:    Haskell2010
+
+executable simple
+  hs-source-dirs:      ./
+  main-is:             Simple.hs
+  build-depends:       base >=4.7 && <4.8,
+                       docopt
+  ghc-options:         -Wall
+  default-language:    Haskell2010

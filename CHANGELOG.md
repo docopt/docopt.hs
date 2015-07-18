@@ -1,3 +1,8 @@
+# Unreleased
+
+- Fix `isPresent` treatment of repeatable arguments/options [#15]
+- Fix build failure for stackage inclusion
+
 ### 0.7.0.2
 
 - Minor docs/README tweaks [#13]

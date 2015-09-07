@@ -46,7 +46,11 @@ library
                       parsec == 3.1.*,
                       containers
 
-  ghc-options:        -Wall -fno-warn-unused-do-bind
+  ghc-options:        -Wall
+                      -fno-warn-unused-binds
+                      -fno-warn-unused-do-bind
+                      -fno-warn-unused-matches
+                      -fno-warn-name-shadowing
 
   if impl(ghc >= 6.10) && flag(template-haskell)
     exposed-modules:  System.Console.Docopt
@@ -60,18 +64,28 @@ test-suite tests
   hs-source-dirs:     ./, test
   main-is:            LangAgnosticTests.hs
 
+  ghc-options:        -Wall
+                      -fno-warn-unused-binds
+                      -fno-warn-unused-do-bind
+                      -fno-warn-unused-matches
+                      -fno-warn-name-shadowing
+                      -fno-warn-orphans
+
   build-depends:      base == 4.*,
                       parsec == 3.1.*,
                       containers,
                       docopt,
-                      split,
-                      ansi-terminal,
-                      aeson,
+                      HUnit,
+                      split >= 0.2.2,
+                      ansi-terminal >= 0.6,
+                      aeson >= 0.8,
                       bytestring == 0.10.*,
                       template-haskell,
                       th-lift
 
-  other-modules:      System.Console.Docopt.Types,
+  other-modules:      System.Console.Docopt.ApplicativeParsec,
                       System.Console.Docopt.ParseUtils,
+                      System.Console.Docopt.Types,
                       System.Console.Docopt.UsageParse,
-                      System.Console.Docopt.OptParse
+                      System.Console.Docopt.OptParse,
+                      System.Console.Docopt.Public

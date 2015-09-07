@@ -1,12 +1,10 @@
 module System.Console.Docopt.Types
     where
 
-import           Data.Ord (comparing)
 import           Data.Map (Map)
 import qualified Data.Map as M
 import           Data.List (nub)
 
-import System.Console.Docopt.ParseUtils
 
 -- * Usage expression Types
 
@@ -21,9 +19,9 @@ data Pattern a = Sequence [Pattern a]
                deriving (Show, Eq)
 
 atoms :: Eq a => Pattern a -> [a]
-atoms (Sequence ps)  = foldl (++) [] $ map atoms ps
-atoms (OneOf ps)     = foldl (++) [] $ map atoms $ nub ps
-atoms (Unordered ps) = foldl (++) [] $ map atoms $ nub ps
+atoms (Sequence ps)  = concatMap atoms ps
+atoms (OneOf ps)     = concatMap atoms $ nub ps
+atoms (Unordered ps) = concatMap atoms $ nub ps
 atoms (Optional p)   = atoms p
 atoms (Repeated p)   = atoms p
 atoms (Atom a)       = [a]

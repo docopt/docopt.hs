@@ -8,5 +8,4 @@ module System.Console.Docopt.ApplicativeParsec
     ) where
 
 import Control.Applicative hiding (optional, (<|>))
-import Control.Monad (MonadPlus(..), ap)
 import Text.ParserCombinators.Parsec hiding (many)

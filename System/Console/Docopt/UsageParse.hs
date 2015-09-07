@@ -1,7 +1,6 @@
-module System.Console.Docopt.UsageParse 
+module System.Console.Docopt.UsageParse
   where
 
-import           Data.Map (Map)
 import qualified Data.Map as M
 import           Data.Ord (comparing)
 import           GHC.Exts (Down(..))
@@ -12,7 +11,7 @@ import System.Console.Docopt.Types
 
 -- * Helpers
 
--- | Flattens the top level of a Pattern, as long as that 
+-- | Flattens the top level of a Pattern, as long as that
 --   /does not/ alter the matching semantics of the Pattern
 flatten :: Pattern a -> Pattern a
 flatten (Sequence (x:[]))  = x
@@ -20,11 +19,14 @@ flatten (OneOf (x:[]))     = x
 flatten (Unordered (x:[])) = x
 flatten x                  = x
 
+flatSequence :: [Pattern a] -> Pattern a
 flatSequence = flatten . Sequence
+
+flatOneOf :: [Pattern a] -> Pattern a
 flatOneOf = flatten . OneOf
 
 
--- * Pattern Parsers 
+-- * Pattern Parsers
 
 pLine :: CharParser OptInfoMap OptPattern
 pLine = flatten . OneOf <$> pSeq `sepBy1` (inlineSpaces >> pipe)
@@ -40,25 +42,24 @@ pReqGroup :: CharParser OptInfoMap [OptPattern]
 pReqGroup = pGroup '(' pExpSeq ')'
 
 saveOptionsExpectVal :: (a -> Option) -> [(a, Bool)] -> CharParser OptInfoMap ()
-saveOptionsExpectVal t pairs = do
-    updateState $ \st -> foldl save st pairs
+saveOptionsExpectVal t pairs = updateState $ \st -> foldl save st pairs
     where save infomap (name, optExpectsVal) = M.alter alterFn opt infomap
             where opt = t name
                   alterFn oldval = Just $ case oldval of
-                    Just oldinfo -> oldinfo {expectsVal = optExpectsVal || (expectsVal oldinfo)}
+                    Just oldinfo -> oldinfo {expectsVal = optExpectsVal || expectsVal oldinfo}
                     Nothing -> (fromSynList [opt]) {expectsVal = optExpectsVal}
 
 
 pShortOption :: CharParser OptInfoMap (Char, Bool)
-pShortOption = try $ do char '-' 
-                        ch <- letter 
+pShortOption = try $ do char '-'
+                        ch <- letter
                         expectsVal <- pOptionArgument
                         return (ch, expectsVal)
 
 pStackedShortOption :: CharParser OptInfoMap OptPattern
-pStackedShortOption = try $ do 
+pStackedShortOption = try $ do
     char '-'
-    chars <- many1 $ letter
+    chars <- many1 letter
     lastExpectsVal <- pOptionArgument
     let (firstChars, lastChar) = (init chars, last chars)
         firstPairs = map (\x -> (x,False)) firstChars
@@ -70,8 +71,8 @@ pStackedShortOption = try $ do
       _ -> return $ Unordered $ map (Atom . ShortOption) chars
 
 pLongOption :: CharParser OptInfoMap (Name, Bool)
-pLongOption = try $ do 
-    string "--" 
+pLongOption = try $ do
+    string "--"
     name <- many1 $ oneOf alphanumerics
     expectsVal <- pOptionArgument
     --let expectsVal = False
@@ -81,20 +82,20 @@ pAnyOption :: CharParser OptInfoMap String
 pAnyOption = try (string "options")
 
 pOptionArgument :: CharParser OptInfoMap Bool -- True if one is encountered, else False
-pOptionArgument = option False $ try $ do 
-    (try $ char '=') <|> try inlineSpace
+pOptionArgument = option False $ try $ do
+    try (char '=') <|> try inlineSpace
     notFollowedBy (char '-')
     try pArgument <|> try (many1 $ oneOf alphanumerics)
     return True
 
 pArgument :: CharParser OptInfoMap String
-pArgument = (try bracketStyle) <|> (try upperStyle) 
+pArgument = try bracketStyle <|> try upperStyle
             where bracketStyle = do
-                      open <- char '<' 
+                      open <- char '<'
                       name <- many $ oneOf alphanumSpecial
                       close <- char '>'
                       return name
-                  upperStyle = do 
+                  upperStyle = do
                       first <- oneOf uppers
                       rest <- many $ oneOf $ uppers ++ numerics
                       return $ first:rest
@@ -104,16 +105,16 @@ pCommand = many1 (oneOf alphanumerics)
 
 -- '<arg>...' make an OptPattern Repeated if followed by ellipsis
 repeatable :: CharParser OptInfoMap OptPattern -> CharParser OptInfoMap OptPattern
-repeatable p = do 
+repeatable p = do
     expct <- p
-    tryRepeat <- ((try $ (optional inlineSpace) >> ellipsis) >> (return Repeated)) <|> (return id)
+    tryRepeat <- (try (optional inlineSpace >> ellipsis) >> return Repeated) <|> return id
     return (tryRepeat expct)
 
 pExp :: CharParser OptInfoMap OptPattern
 pExp = inlineSpaces >> repeatable value
      where value = flatOneOf <$> pReqGroup
                -- <|> Optional . flatten . OneOf <$> betweenS "[(" ")]" pLine
-               <|> flatten . Sequence . (map Optional) <$> try (betweenS "[" "]" pExp)
+               <|> flatten . Sequence . map Optional <$> try (betweenS "[" "]" pExp)
                <|> Optional . flatten . OneOf <$> pOptGroup
                <|> return (Atom AnyOption) <* pAnyOption
                <|> pStackedShortOption
@@ -132,9 +133,9 @@ pUsageHeader = caseInsensitive "Usage:"
 -- | Ignores leading spaces and first word, then parses
 --   the rest of the usage line
 pUsageLine :: CharParser OptInfoMap OptPattern
-pUsageLine = 
+pUsageLine =
     try $ do
-        inlineSpaces 
+        inlineSpaces
         many1 (satisfy (not . isSpace)) -- prog name
         pLine
 
@@ -143,7 +144,7 @@ pUsagePatterns = do
         many (notFollowedBy pUsageHeader >> anyChar)
         pUsageHeader
         optionalEndline
-        usageLines <- (pUsageLine `sepEndBy` endline)
+        usageLines <- pUsageLine `sepEndBy` endline
         return $ flatten . OneOf $ usageLines
 
 -- * Option Synonyms & Defaults Parsers
@@ -154,10 +155,10 @@ begOptionLine :: CharParser OptInfoMap String
 begOptionLine = inlineSpaces >> lookAhead (char '-') >> return "-"
 
 pOptSynonyms :: CharParser OptInfoMap ([Option], Bool)
-pOptSynonyms = do inlineSpaces 
+pOptSynonyms = do inlineSpaces
                   pairs <- p `sepEndBy1` (optional (char ',') >> inlineSpace)
                   let options = map fst pairs
-                      expectsVal = or $ map snd pairs
+                      expectsVal = any snd pairs
                   return (options, expectsVal)
                where p =   (\(c, ev) -> (ShortOption c, ev)) <$> pShortOption
                        <|> (\(s, ev) -> (LongOption s, ev)) <$> pLongOption
@@ -173,18 +174,17 @@ pDefaultTag = do
 pOptDefault :: CharParser OptInfoMap (Maybe String)
 pOptDefault = do
     skipUntil (pDefaultTag <|> (newline >> begOptionLine))
-    maybeDefault <- optionMaybe pDefaultTag
-    return maybeDefault
+    optionMaybe pDefaultTag
 
 pOptDescription :: CharParser OptInfoMap ()
 pOptDescription = try $ do
     (syns, expectsVal) <- pOptSynonyms
     def <- pOptDefault
     skipUntil (newline >> begOptionLine)
-    updateState $ \infomap -> 
+    updateState $ \infomap ->
       let optinfo = (fromSynList syns) {defaultVal = def, expectsVal = expectsVal}
           saveOptInfo infomap expct = M.insert expct optinfo infomap
-      in  foldl saveOptInfo infomap syns 
+      in  foldl saveOptInfo infomap syns
     return ()
 
 pOptDescriptions :: CharParser OptInfoMap OptInfoMap
@@ -196,14 +196,14 @@ pOptDescriptions = do
 
 
 -- | Main usage parser: parses all of the usage lines into an Exception,
---   and all of the option descriptions along with any accompanying 
+--   and all of the option descriptions along with any accompanying
 --   defaults, and returns both in a tuple
 pDocopt :: CharParser OptInfoMap OptFormat
 pDocopt = do
     optPattern <- pUsagePatterns
     optInfoMap <- pOptDescriptions
     let optPattern' = eagerSort $ expectSynonyms optInfoMap optPattern
-        saveCanRepeat pat el minfo = case minfo of 
+        saveCanRepeat pat el minfo = case minfo of
           (Just info) -> Just $ info {isRepeated = canRepeat pat el}
           (Nothing)   -> Just $ (fromSynList []) {isRepeated = canRepeat pat el}
         optInfoMap' = alterAllWithKey (saveCanRepeat optPattern') (atoms optPattern') optInfoMap
@@ -221,26 +221,26 @@ expectSynonyms oim (Repeated ex)   = Repeated $ expectSynonyms oim ex
 expectSynonyms oim a@(Atom atom)   = case atom of
     e@(Command ex)     -> a
     e@(Argument ex)    -> a
-    e@(AnyOption)      -> flatten $ Unordered $ nub $ map Atom $ concat $ map synonyms (M.elems oim)
-    e@(LongOption ex)  -> 
+    e@AnyOption        -> flatten $ Unordered $ nub $ map Atom $ concatMap synonyms (M.elems oim)
+    e@(LongOption ex)  ->
         case synonyms <$> e `M.lookup` oim of
           Just syns -> flatten . OneOf $ map Atom syns
           Nothing -> a
-    e@(ShortOption c)  -> 
+    e@(ShortOption c)  ->
         case synonyms <$> e `M.lookup` oim of
           Just syns -> flatten . OneOf $ map Atom syns
           Nothing -> a
 
 canRepeat :: Eq a => Pattern a -> a -> Bool
-canRepeat pat target = 
+canRepeat pat target =
   case pat of
     (Sequence ps)  -> canRepeatInside ps || (atomicOccurrences ps > 1)
-    (OneOf ps)     -> foldl (||) False $ map ((flip canRepeat) target) ps
+    (OneOf ps)     -> canRepeatInside ps
     (Unordered ps) -> canRepeatInside ps || (atomicOccurrences ps > 1)
     (Optional p)   -> canRepeat p target
-    (Repeated p)   -> target `elem` (atoms pat)
+    (Repeated p)   -> target `elem` atoms pat
     (Atom a)       -> False
-  where canRepeatInside ps = foldl (||) False $ map ((flip canRepeat) target) ps      
+  where canRepeatInside = any (`canRepeat` target)
         atomicOccurrences ps = length $ filter (== target) $ atoms $ Sequence ps
 
 
@@ -250,7 +250,7 @@ canRepeat pat target =
 --     LongOption "option" > ShortOption 'o' == True
 --     Command "cmd" > Argument "arg"        == True
 compareOptSpecificity :: Option -> Option -> Ordering
-compareOptSpecificity optA optB = case optA of 
+compareOptSpecificity optA optB = case optA of
     LongOption a  -> case optB of
       LongOption b  -> comparingFirst length a b
       _             -> GT
@@ -258,38 +258,38 @@ compareOptSpecificity optA optB = case optA of
       LongOption b  -> LT
       ShortOption b -> compare a b
       _             -> GT
-    Command a     -> case optB of 
+    Command a     -> case optB of
       LongOption b  -> LT
       ShortOption b -> LT
       Command b     -> comparingFirst length a b
       _             -> GT
-    Argument a    -> case optB of 
+    Argument a    -> case optB of
       AnyOption     -> GT
       Argument b    -> comparingFirst length a b
       _             -> LT
-    AnyOption     -> case optB of 
+    AnyOption     -> case optB of
       AnyOption     -> EQ
       _             -> LT
-  where 
+  where
     comparingFirst :: (Ord a, Ord b) => (a -> b) -> a -> a -> Ordering
-    comparingFirst p a1 a2 = 
+    comparingFirst p a1 a2 =
       case compare (p a1) (p a2) of
         EQ -> compare a1 a2
         o  -> o
 
 -- | Sort an OptPattern such that more-specific patterns come first,
---   while leaving the semantics of the pattern structure unchanged.   
+--   while leaving the semantics of the pattern structure unchanged.
 eagerSort :: OptPattern -> OptPattern
-eagerSort pat = 
+eagerSort pat =
   case pat of
     Sequence ps  -> Sequence $ map eagerSort ps
     OneOf ps     -> OneOf $   map eagerSort
-                            . sortBy (comparing $ Down . maxLength) 
+                            . sortBy (comparing $ Down . maxLength)
                             . sortBy (comparing representativeAtom)
                             $ ps
     Unordered ps -> Unordered $ map eagerSort ps
     Optional p   -> Optional $ eagerSort p
-    Repeated p   -> Repeated $ eagerSort p 
+    Repeated p   -> Repeated $ eagerSort p
     a@(Atom _)   -> a
   where
     representativeAtom :: OptPattern -> Option
@@ -307,7 +307,7 @@ eagerSort pat =
       Unordered ps -> sum $ map maxLength ps
       Optional p   -> maxLength p
       Repeated p   -> maxLength p
-      Atom a       -> case a of 
+      Atom a       -> case a of
         LongOption o  -> length o
         ShortOption _ -> 1
         Command c     -> length c

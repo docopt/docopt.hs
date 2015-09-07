@@ -61,7 +61,9 @@ test-suite tests
                       split,
                       ansi-terminal,
                       aeson,
-                      bytestring == 0.10.*
+                      bytestring == 0.10.*,
+                      template-haskell,
+                      th-lift
 
   other-modules:      System.Console.Docopt.Types,
                       System.Console.Docopt.ParseUtils,

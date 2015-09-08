@@ -1,7 +1,5 @@
 {-# LANGUAGE FlexibleInstances #-}
-module LangAgnosticTests where
 
-import Control.Monad (forM, unless)
 import System.Exit
 import System.Console.ANSI
 
@@ -18,7 +16,7 @@ import Data.List.Split
 import Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as BS
 
-import Distribution.TestSuite
+import Test.HUnit
 
 
 instance ToJSON ArgValue where
@@ -48,9 +46,14 @@ blue    = coloredString Blue
 magenta = coloredString Magenta
 
 
-tests :: IO [Test]
-tests = readFile "test/testcases.docopt" >>= testsFromDocoptSpecFile "testcases.docopt"
-
+main :: IO ()
+main = do
+  f <- readFile "test/testcases.docopt"
+  tests <- testsFromDocoptSpecFile "testcases.docopt" f
+  counts <- runTestTT $ TestList tests
+  exitWith $ if failures counts > 0
+                then ExitFailure 1
+                else ExitSuccess
 
 testsFromDocoptSpecFile :: String -> String -> IO [Test]
 testsFromDocoptSpecFile name testFile =
@@ -59,7 +62,7 @@ testsFromDocoptSpecFile name testFile =
       caseGroups = filter (not . null) $ splitOn "r\"\"\"" testFileClean
 
   in
-  return . (:[]) . testGroup name $ (zip caseGroups [1..]) >>= \(caseGroup, icg) -> do
+  return . (:[]) . TestLabel name . test $ zip caseGroups [(1 :: Int)..] >>= \(caseGroup, icg) -> do
 
     let [usage, rawCases] = splitOn "\"\"\"" caseGroup
         cases = filter (/= "\n") $ splitOn "$ " rawCases
@@ -76,7 +79,7 @@ testsFromDocoptSpecFile name testFile =
             magenta (show optFormat)
           ]
 
-    (zip cases [1..]) >>= \(testcase, itc) -> do
+    zip cases [(1::Int)..] >>= \(testcase, itc) -> do
 
       let (cmdline, rawTarget_) = break (== '\n') testcase
           rawTarget = filter (/= '\n') rawTarget_
@@ -96,21 +99,12 @@ testsFromDocoptSpecFile name testFile =
               "Cmd: " ++ yellow cmdline,
               "Target: " ++ (if testCaseSuccess then green else magenta) rawTarget
             ]
-      -- unless testCaseSuccess $
-      --   putStrLn $ "Failure: " ++ red (BS.unpack $ encode parsedArgsJSON)
-      -- putStrLn ""
 
-      let ti = TestInstance
-                { run = return . Finished $
-                      (if testCaseSuccess then Pass else
-                          Fail $ unlines . filter (not . null) $
-                            groupDescLines
-                            ++ testDescLines
-                            ++ ["Failure: " ++ red (BS.unpack $ encode parsedArgsJSON)])
-                , name = "group-" ++ show icg ++ "-case-" ++ show itc
-                , tags = []
-                , options = []
-                , setOption = \_ _ -> Right ti
-                }
+      let testMsg = unlines . filter (not . null) $
+                      groupDescLines
+                      ++ testDescLines
+                      ++ ["Failure: " ++ red (BS.unpack $ encode parsedArgsJSON)]
 
-      return $ Test ti
+      let ti = TestCase $ testCaseSuccess @? testMsg
+
+      return $ TestLabel ("group-" ++ show icg ++ "-case-" ++ show itc) ti

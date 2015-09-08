@@ -60,9 +60,9 @@ library
                       th-lift >= 0.7 && < 1.0
 
 test-suite tests
-  type:               detailed-0.9
+  type:               exitcode-stdio-1.0
   hs-source-dirs:     ./, test
-  test-module:        LangAgnosticTests
+  main-is:            LangAgnosticTests.hs
 
   ghc-options:        -Wall
                       -fno-warn-unused-binds
@@ -75,7 +75,7 @@ test-suite tests
                       parsec == 3.1.*,
                       containers,
                       docopt,
-                      Cabal == 1.22.*,
+                      HUnit,
                       split >= 0.2.2,
                       ansi-terminal >= 0.6,
                       aeson >= 0.8,

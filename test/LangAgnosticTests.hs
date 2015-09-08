@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
+module LangAgnosticTests where
 
-import Control.Monad (unless)
+import Control.Monad (forM, unless)
 import System.Exit
 import System.Console.ANSI
 
@@ -16,6 +17,8 @@ import qualified Data.Map as M
 import Data.List.Split
 import Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as BS
+
+import Distribution.TestSuite
 
 
 instance ToJSON ArgValue where
@@ -44,46 +47,70 @@ yellow  = coloredString Yellow
 blue    = coloredString Blue
 magenta = coloredString Magenta
 
-forEach :: Monad m => [a] -> (a -> m b) -> m ()
-forEach xs = sequence_ . flip map xs
+
+tests :: IO [Test]
+tests = readFile "test/testcases.docopt" >>= testsFromDocoptSpecFile "testcases.docopt"
 
 
-main :: IO ()
-main = do
-  testFile <- readFile "test/testcases.docopt"
-  --putStrLn rawTests
+testsFromDocoptSpecFile :: String -> String -> IO [Test]
+testsFromDocoptSpecFile name testFile =
   let notCommentLine x = null x || ('#' /= head x)
       testFileClean = unlines $ filter notCommentLine $ lines testFile
       caseGroups = filter (not . null) $ splitOn "r\"\"\"" testFileClean
-  --putStrLn $ head caseGroups
-  forEach caseGroups $ \caseGroup -> do
+
+  in
+  return . (:[]) . testGroup name $ (zip caseGroups [1..]) >>= \(caseGroup, icg) -> do
+
     let [usage, rawCases] = splitOn "\"\"\"" caseGroup
         cases = filter (/= "\n") $ splitOn "$ " rawCases
-    optFormat <- case runParser pDocopt M.empty "Usage" usage of
-      Left e -> do
-        putStrLn "couldn't parse usage text"
-        return (Sequence [], M.empty)
-      Right o -> return o
-    putStrLn $ "Docopt:\n" ++ blue usage
-    putStrLn $ "Pattern:\n" ++ magenta (show optFormat)
-    --putStrLn $ "Cases:  " ++ show cases
-    forEach cases $ \testcase -> do
+
+    let (optFormat, docParseMsg) = case runParser pDocopt M.empty "Usage" usage of
+          Left e -> ((Sequence [], M.empty), "Couldn't parse usage text")
+          Right o -> (o, "")
+
+    let groupDescLines = [
+            docParseMsg,
+            "Docopt:",
+            blue usage,
+            "Pattern:",
+            magenta (show optFormat)
+          ]
+
+    (zip cases [1..]) >>= \(testcase, itc) -> do
+
       let (cmdline, rawTarget_) = break (== '\n') testcase
           rawTarget = filter (/= '\n') rawTarget_
           maybeTargetJSON = decode (BS.pack rawTarget) :: Maybe Value
           rawArgs = tail $ words cmdline
-      parsedArgs <- case getArguments optFormat rawArgs of
-        Left e -> do
-          putStrLn $ "Parse Error: " ++ red (show e)
-          return M.empty
-        Right a -> return a
+
+      let (parsedArgs, argParseMsg) = case getArguments optFormat rawArgs of
+            Left e -> (M.empty, "Parse Error: " ++ red (show e) ++ "\n")
+            Right a -> (a, "")
+
       let parsedArgsJSON = toJSON parsedArgs
           testCaseSuccess = if rawTarget == "\"user-error\""
             then M.null parsedArgs
             else maybeTargetJSON == Just parsedArgsJSON
-      putStrLn $ "Case Cmd: " ++ yellow cmdline
-      putStrLn $ "Case Target: " ++ (if testCaseSuccess then green else magenta) rawTarget
-      unless testCaseSuccess $
-        putStrLn $ "Failure: " ++ red (BS.unpack $ encode parsedArgsJSON)
-      putStrLn ""
-  exitSuccess
+
+      let testDescLines = [
+              "Cmd: " ++ yellow cmdline,
+              "Target: " ++ (if testCaseSuccess then green else magenta) rawTarget
+            ]
+      -- unless testCaseSuccess $
+      --   putStrLn $ "Failure: " ++ red (BS.unpack $ encode parsedArgsJSON)
+      -- putStrLn ""
+
+      let ti = TestInstance
+                { run = return . Finished $
+                      (if testCaseSuccess then Pass else
+                          Fail $ unlines . filter (not . null) $
+                            groupDescLines
+                            ++ testDescLines
+                            ++ ["Failure: " ++ red (BS.unpack $ encode parsedArgsJSON)])
+                , name = "group-" ++ show icg ++ "-case-" ++ show itc
+                , tags = []
+                , options = []
+                , setOption = \_ _ -> Right ti
+                }
+
+      return $ Test ti

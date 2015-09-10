@@ -20,6 +20,8 @@ bug-reports:         https://github.com/docopt/docopt.hs/issues
 extra-source-files:  README.md
                      CHANGELOG.md
 
+data-files:          test/testcases.docopt
+
 source-repository head
   type:       git
   location:   https://github.com/docopt/docopt.hs.git

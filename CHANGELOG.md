@@ -1,7 +1,12 @@
+### 0.7.0.4
+
+- Fix the test suite when run from a distributed tarball [#21]
+- Make the test suite more developer-friendly
+
 ### 0.7.0.3
 
 - Fix `isPresent` treatment of repeatable arguments/options [#15]
-- Fix build failure for stackage inclusion
+- Fix build failure for stackage inclusion [#20]
 
 ### 0.7.0.2
 

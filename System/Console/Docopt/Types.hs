@@ -1,9 +1,10 @@
 module System.Console.Docopt.Types
     where
 
+import           Data.Char (isUpper)
+import           Data.List (nub)
 import           Data.Map (Map)
 import qualified Data.Map as M
-import           Data.List (nub)
 
 
 -- * Usage expression Types
@@ -39,7 +40,9 @@ type OptPattern = Pattern Option
 humanize :: Option -> String
 humanize opt = case opt of
   Command name    -> name
-  Argument name   -> name
+  Argument name   -> if all isUpper name
+                         then name
+                         else "<" ++ name ++ ">"
   LongOption name -> "--"++name
   ShortOption c   -> ['-',c]
   AnyOption       -> "[options]"

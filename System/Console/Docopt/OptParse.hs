@@ -217,7 +217,7 @@ getArguments optfmt argv =
         delim = "«»"
         argvString = delim `intercalate` argv
 
-        p = parsedArgs <$> (returnState $ buildOptParser delim optfmt)
+        p = parsedArgs <$> returnState (buildOptParser delim optfmt)
 
         patAtoms = atoms pattern
         infoKeys = (\\ [AnyOption]) $ M.keys infomap
@@ -229,6 +229,6 @@ getArguments optfmt argv =
 
         e_parsedArgs = runParser p initialState "argv" argvString
 
-        fillMissingDefaults = \pargs -> M.union pargs defaultArgVals
+        fillMissingDefaults pargs = M.union pargs defaultArgVals
 
     in fillMissingDefaults <$> e_parsedArgs

@@ -64,6 +64,7 @@ blacklist (4, 3) = True
 blacklist (7, 1) = True
 blacklist (8, 1) = True
 blacklist (8, 2) = True
+blacklist (35, 1) = True
 blacklist (64, 1) = True
 -- Partial-option disambiguation
 blacklist (4, 2) = True
@@ -78,28 +79,6 @@ blacklist (15, 2) = True
 blacklist (16, 2) = True
 blacklist (17, 2) = True
 blacklist (18, 2) = True
--- Argument lookup key ("<arg>" v. "arg"; should fix)
-blacklist (21, 1) = True
-blacklist (22, 1) = True
-blacklist (22, 3) = True
-blacklist (23, 1) = True
-blacklist (24, 1) = True
-blacklist (24, 2) = True
-blacklist (25, 2) = True
-blacklist (25, 3) = True
-blacklist (26, 1) = True
-blacklist (26, 2) = True
-blacklist (27, 1) = True
-blacklist (27, 2) = True
-blacklist (27, 3) = True
-blacklist (28, 1) = True
-blacklist (28, 3) = True
-blacklist (35, 1) = True
-blacklist (60, 1) = True
-blacklist (60, 2) = True
-blacklist (61, 1) = True
-blacklist (66, 1) = True
-blacklist (72, 1) = True
 -- Weirdly broken (argument capture; should fix)
 blacklist (33, 2) = True
 blacklist (33, 3) = True

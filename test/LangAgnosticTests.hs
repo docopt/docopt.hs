@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 
+import Control.Monad ( (>=>) )
 import System.Exit
 import System.Console.ANSI
 
@@ -17,6 +18,7 @@ import Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as BS
 
 import Test.HUnit
+import Paths_docopt (getDataFileName)
 
 
 instance ToJSON ArgValue where
@@ -48,7 +50,7 @@ magenta = coloredString Magenta
 
 main :: IO ()
 main = do
-  f <- readFile "test/testcases.docopt"
+  f <- (getDataFileName >=> readFile) "test/testcases.docopt"
   tests <- testsFromDocoptSpecFile "testcases.docopt" f blacklist
   counts <- runTestTT $ TestList tests
   exitWith $ if failures counts > 0

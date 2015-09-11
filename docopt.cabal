@@ -88,4 +88,5 @@ test-suite tests
                       System.Console.Docopt.Types,
                       System.Console.Docopt.UsageParse,
                       System.Console.Docopt.OptParse,
-                      System.Console.Docopt.Public
+                      System.Console.Docopt.Public,
+                      Paths_docopt

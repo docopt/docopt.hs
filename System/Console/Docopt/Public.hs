@@ -2,7 +2,7 @@ module System.Console.Docopt.Public
   (
     -- * Command line arguments parsers
       parseArgs
-    , parseArgsOrExit
+    , parseArgsOrDie
 
     -- *** Re-exported from Parsec
     , ParseError
@@ -11,7 +11,9 @@ module System.Console.Docopt.Public
     , Docopt ()
     , usage
     , exitWithUsage
+    , dieWithUsage
     , exitWithUsageMessage
+    , dieWithUsageMessage
 
     -- * Argument lookup
     , Option()
@@ -21,7 +23,7 @@ module System.Console.Docopt.Public
     , isPresent
     , notPresent
     , getArg
-    , getArgOrExitWith
+    , getArgOrDieWith
     , getArgWithDefault
     , getAllArgs
     , getArgCount
@@ -47,31 +49,45 @@ import Data.Maybe (fromMaybe)
 import System.Console.Docopt.Types
 import System.Console.Docopt.ApplicativeParsec (ParseError)
 import System.Console.Docopt.OptParse
-
+import System.IO
 
 -- | Parse command line arguments.
 parseArgs :: Docopt -> [String] -> Either ParseError Arguments
 parseArgs parser = getArguments (optFormat parser)
 
--- | Same as 'parseArgs', but 'exitWithUsage' on parse failure. E.g.
+-- | Same as 'parseArgs', but 'dieWithUsage' on parse failure. E.g.
 --
--- > args <- parseArgsOrExit patterns =<< getArgs
-parseArgsOrExit :: Docopt -> [String] -> IO Arguments
-parseArgsOrExit parser argv = either (const $ exitWithUsage parser) return $ parseArgs parser argv
+-- > args <- parseArgsOrDie patterns =<< getArgs
+parseArgsOrDie :: Docopt -> [String] -> IO Arguments
+parseArgsOrDie parser argv = either (const $ dieWithUsage parser) return $ parseArgs parser argv
 
--- | Exit after printing usage text.
+-- | Exit after printing usage text to stdout.
 exitWithUsage :: Docopt -> IO a
 exitWithUsage doc = do
   putStr $ usage doc
-  exitFailure
+  exitSuccess
 
--- | Exit after printing a custom message followed by usage text.
---   Intended for convenience when more context can be given about what went wrong.
+-- | Exit after printing usage text to stderr.
+dieWithUsage :: Docopt -> IO a
+dieWithUsage = die . usage
+
+-- | Exit after printing a custom message followed by usage text to stdout.
+--   Intended for providing documentation to a user.
 exitWithUsageMessage :: Docopt -> String -> IO a
 exitWithUsageMessage doc msg = do
   putStrLn msg
   putStrLn ""
   exitWithUsage doc
+
+-- | Exit after printing a custom message followed by usage text to stderr.
+--   Intended for when something went wrong and context can be given about
+--   what went wrong.
+dieWithUsageMessage :: Docopt -> String -> IO a
+dieWithUsageMessage doc msg = do
+  hPutStrLn stderr msg
+  hPutStrLn stderr  ""
+  dieWithUsage doc
+
 
 -- Query functions
 ------------------
@@ -111,12 +127,12 @@ getArg args opt =
       Value v          -> Just v
       _                -> Nothing
 
--- | Same as 'getArg', but 'exitWithUsage' if 'Nothing'.
+-- | Same as 'getArg', but 'dieWithUsage' if 'Nothing'.
 --
 --   As in 'getArg', if your usage pattern required the option, 'getArgOrExitWith' will not exit.
-getArgOrExitWith :: Docopt -> Arguments -> Option -> IO String
-getArgOrExitWith doc args opt = exitUnless $ getArg args opt
-  where exitUnless = maybe (exitWithUsageMessage doc $ "argument expected for: " ++ show opt) return
+getArgOrDieWith :: Docopt -> Arguments -> Option -> IO String
+getArgOrDieWith doc args opt = dieUnless $ getArg args opt
+  where dieUnless = maybe (dieWithUsageMessage doc $ "argument expected for: " ++ show opt) return
 
 -- | Same as 'getArg', but eliminate 'Nothing' with a default argument.
 getArgWithDefault :: Arguments -> String -> Option -> String

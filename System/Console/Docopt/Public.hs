@@ -85,7 +85,7 @@ exitWithUsageMessage doc msg = do
 dieWithUsageMessage :: Docopt -> String -> IO a
 dieWithUsageMessage doc msg = do
   hPutStrLn stderr msg
-  hPutStrLn stderr  ""
+  hPutStrLn stderr ""
   dieWithUsage doc
 
 

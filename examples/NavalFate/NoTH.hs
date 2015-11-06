@@ -10,7 +10,7 @@ main = do
   -- ONLY for the sake of not repeating the naval fate usage
   usageStr <- readFile "NavalFate/USAGE.docopt"
 
-  doc <- parseUsageOrExit usageStr
-  args <- parseArgsOrExit doc =<< getArgs
+  doc <- parseUsageOrDie usageStr
+  args <- parseArgsOrDie doc =<< getArgs
 
   navalFateDispatchArgs doc args

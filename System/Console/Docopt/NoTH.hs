@@ -2,7 +2,7 @@ module System.Console.Docopt.NoTH
   (
     -- * Usage parsers
       parseUsage
-    , parseUsageOrExit
+    , parseUsageOrDie
 
     , module System.Console.Docopt.Public
   )
@@ -31,8 +31,7 @@ parseUsage usg =
 --
 -- > let usageStr = "Usage:\n  prog [--option]\n"
 -- > patterns <- parseUsageOrExit usageStr
-parseUsageOrExit :: String -> IO Docopt
-parseUsageOrExit usg = exitUnless $ parseUsage usg
+parseUsageOrDie :: String -> IO Docopt
+parseUsageOrDie usg = exitUnless $ parseUsage usg
   where
-    exit message = putStrLn message >> exitFailure
-    exitUnless = either (const $ exit usg) return
+    exitUnless = either (const $ die usg) return

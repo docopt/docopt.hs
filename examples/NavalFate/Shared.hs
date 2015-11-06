@@ -9,7 +9,7 @@ navalFateDispatchArgs doc opts = do
   -- print opts
   -- putStrLn ""
 
-  let getArgOrExit = getArgOrExitWith doc
+  let getArgOrDie = getArgOrDieWith doc
 
   when (opts `isPresent` (command "ship")) $ do
     putStrLn "Command 'ship'"
@@ -19,15 +19,15 @@ navalFateDispatchArgs doc opts = do
       putStrLn $ "  <name> " ++ show name
     when (opts `isPresent` (command "shoot")) $ do
       putStrLn "  Command 'shoot'"
-      x <- (opts `getArgOrExit` (argument "x"))
+      x <- (opts `getArgOrDie` (argument "x"))
       putStrLn $ "  <x> " ++ show x
-      y <- (opts `getArgOrExit` (argument "y"))
+      y <- (opts `getArgOrDie` (argument "y"))
       putStrLn $ "  <y> " ++ show y
     when (opts `isPresent` (command "move")) $ do
-      x <- opts `getArgOrExit` (argument "x")
-      y <- opts `getArgOrExit` (argument "y")
-      name <- opts `getArgOrExit` (argument "name")
-      speed <- opts `getArgOrExit` (longOption "speed")
+      x <- opts `getArgOrDie` (argument "x")
+      y <- opts `getArgOrDie` (argument "y")
+      name <- opts `getArgOrDie` (argument "name")
+      speed <- opts `getArgOrDie` (longOption "speed")
       putStrLn $ "<name> " ++ show name
       putStrLn "  Command 'move'"
       putStrLn $ "  <x> " ++ show x
@@ -40,8 +40,8 @@ navalFateDispatchArgs doc opts = do
         putStrLn "  Command 'set'"
       when (opts `isPresent` (command "remove")) $ do
         putStrLn "  Command 'remove'"
-      x <- opts `getArgOrExit` (argument "x")
-      y <- opts `getArgOrExit` (argument "y")
+      x <- opts `getArgOrDie` (argument "x")
+      y <- opts `getArgOrDie` (argument "y")
       putStrLn $ "  <x> " ++ show x
       putStrLn $ "  <y> " ++ show y
     when (opts `isPresent` (command "list")) $ do

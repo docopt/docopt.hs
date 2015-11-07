@@ -129,7 +129,7 @@ getArg args opt =
 
 -- | Same as 'getArg', but 'dieWithUsage' if 'Nothing'.
 --
---   As in 'getArg', if your usage pattern required the option, 'getArgOrExitWith' will not exit.
+--   As in 'getArg', if your usage pattern required the option, 'getArgOrDieWith' will not exit.
 getArgOrDieWith :: Docopt -> Arguments -> Option -> IO String
 getArgOrDieWith doc args opt = dieUnless $ getArg args opt
   where dieUnless = maybe (dieWithUsageMessage doc $ "argument expected for: " ++ show opt) return

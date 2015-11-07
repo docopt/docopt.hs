@@ -30,7 +30,7 @@ import System.Console.Docopt
 patterns :: Docopt
 patterns = [docoptFile|USAGE.txt|]
 
-getArgOrExit = getArgOrExitWith patterns
+getArgOrDie = getArgOrDieWith patterns
 
 main = do
   args <- parseArgsOrDie patterns =<< getArgs

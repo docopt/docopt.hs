@@ -27,10 +27,10 @@ parseUsage usg =
     Left e       -> Left e
     Right optfmt -> Right (Docopt optfmt usg)
 
--- | Same as 'parseUsage', but 'exitWithUsage' on parse failure. E.g.
+-- | Same as 'parseUsage', but 'dieWithUsage' on parse failure. E.g.
 --
 -- > let usageStr = "Usage:\n  prog [--option]\n"
--- > patterns <- parseUsageOrExit usageStr
+-- > patterns <- parseUsageOrDie usageStr
 parseUsageOrDie :: String -> IO Docopt
 parseUsageOrDie usg = exitUnless $ parseUsage usg
   where

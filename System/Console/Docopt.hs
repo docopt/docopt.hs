@@ -21,21 +21,21 @@
 --   -c, --caps    Caps-lock the echoed argument
 -- |]
 --
--- getArgOrExit = getArgOrExitWith patterns
+-- getArgOrDie = getArgOrDieWith patterns
 --
 -- main :: IO ()
 -- main = do
---   args <- parseArgsOrExit patterns =<< getArgs
+--   args <- parseArgsOrDie patterns =<< getArgs
 --
 --   when (args \`isPresent\` (command \"cat\")) $ do
---     file <- args \`getArgOrExit\` (argument \"file\")
+--     file <- args \`getArgOrDie\` (argument \"file\")
 --     putStr =<< readFile file
 --
 --   when (args \`isPresent\` (command \"echo\")) $ do
 --     let charTransform = if args \`isPresent\` (longOption \"caps\")
 --                         then toUpper
 --                         else id
---     string <- args \`getArgOrExit\` (argument \"string\")
+--     string <- args \`getArgOrDie\` (argument \"string\")
 --     putStrLn $ map charTransform string
 -- @
 module System.Console.Docopt

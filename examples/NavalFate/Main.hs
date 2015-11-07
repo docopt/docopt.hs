@@ -11,6 +11,6 @@ main = do
   --args <- getArgs
   --print args
 
-  opts <- parseArgsOrExit navalFateUsage =<< getArgs
+  opts <- parseArgsOrDie navalFateUsage =<< getArgs
 
   navalFateDispatchArgs navalFateUsage opts

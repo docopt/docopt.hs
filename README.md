@@ -30,20 +30,20 @@ import System.Console.Docopt
 patterns :: Docopt
 patterns = [docoptFile|USAGE.txt|]
 
-getArgOrExit = getArgOrExitWith patterns
+getArgOrDie = getArgOrDieWith patterns
 
 main = do
-  args <- parseArgsOrExit patterns =<< getArgs
+  args <- parseArgsOrDie patterns =<< getArgs
 
   when (args `isPresent` (command "cat")) $ do
-    file <- args `getArgOrExit` (argument "file")
+    file <- args `getArgOrDieWith` (argument "file")
     putStr =<< readFile file
 
   when (args `isPresent` (command "echo")) $ do
     let charTransform = if args `isPresent` (longOption "caps")
                           then toUpper
                           else id
-    string <- args `getArgOrExit` (argument "string")
+    string <- args `getArgOrDieWith` (argument "string")
     putStrLn $ map charTransform string
 ```
 

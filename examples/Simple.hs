@@ -14,6 +14,6 @@ Options:
 
 main :: IO ()
 main = do
-  args <- parseArgsOrExit usageText =<< getArgs
+  args <- parseArgsOrDie usageText =<< getArgs
   print args
-  print (isPresent args (argument "baz")) 
+  print (isPresent args (argument "baz"))

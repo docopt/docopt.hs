@@ -34,4 +34,5 @@ parseUsage usg =
 parseUsageOrDie :: String -> IO Docopt
 parseUsageOrDie usg = exitUnless $ parseUsage usg
   where
+    die msg = putStr msg >> exitFailure
     exitUnless = either (const $ die usg) return

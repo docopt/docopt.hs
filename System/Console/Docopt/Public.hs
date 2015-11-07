@@ -69,7 +69,9 @@ exitWithUsage doc = do
 
 -- | Exit after printing usage text to stderr.
 dieWithUsage :: Docopt -> IO a
-dieWithUsage = die . usage
+dieWithUsage doc = do
+  putStr $ usage doc
+  exitFailure
 
 -- | Exit after printing a custom message followed by usage text to stdout.
 --   Intended for providing documentation to a user.

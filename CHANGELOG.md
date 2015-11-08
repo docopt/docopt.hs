@@ -8,6 +8,7 @@
   - Make `exitWithUsageMessage` exit with success (0), not failure
   - Add `dieWithUsageMessage`, which prints to stderr and exits with 1
   - Rename `getArgOrExitWith` to `getArgOrDieWith`
+- Fix an issue where in some cases pattern lines were matched out of order
 
 
 ### 0.7.0.4

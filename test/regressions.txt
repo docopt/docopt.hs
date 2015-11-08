@@ -1,0 +1,17 @@
+r"""Usage:
+  prog <argument>
+  prog --help
+
+"""
+$ prog --help
+{"<argument>":"--help", "--help":false}
+
+
+# Issue #16: Top-level patterns should never get reordered.
+r"""Usage:
+  prog <bar>
+  prog --help
+
+"""
+$ prog --help
+{"<bar>":"--help", "--help":false}

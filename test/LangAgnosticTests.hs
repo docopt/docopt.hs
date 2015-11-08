@@ -50,12 +50,17 @@ magenta = coloredString Magenta
 
 main :: IO ()
 main = do
-  f <- (getDataFileName >=> readFile) "test/testcases.docopt"
-  tests <- testsFromDocoptSpecFile "testcases.docopt" f blacklist
-  counts <- runTestTT $ TestList tests
+  referenceTestsFile <- (getDataFileName >=> readFile) "test/testcases.docopt"
+  referenceTests <- testsFromDocoptSpecFile "testcases.docopt" referenceTestsFile blacklist
+
+  regressionTestsFile <- (getDataFileName >=> readFile) "test/regressions.txt"
+  regressionTests <- testsFromDocoptSpecFile "regressions.txt" regressionTestsFile (const False)
+
+  counts <- runTestTT $ TestList $ referenceTests ++ regressionTests
   exitWith $ if failures counts > 0
                 then ExitFailure 1
                 else ExitSuccess
+
 
 blacklist :: (Int, Int) -> Bool
 -- Short/long option synonym equality (will fix)
@@ -86,6 +91,7 @@ blacklist (34, 3) = True
 -- [options] expansion pruning (should fix)
 blacklist (67, 1) = True
 blacklist _ = False
+
 
 testsFromDocoptSpecFile :: String
                         -> String
@@ -129,7 +135,7 @@ testsFromDocoptSpecFile name testFile ignore =
           testCaseEquality = if rawTarget == "\"user-error\""
             then M.null parsedArgs
             else maybeTargetJSON == Just parsedArgsJSON
-          blacklisted = blacklist (icg, itc)
+          blacklisted = ignore (icg, itc)
           testCaseSuccess = if blacklisted
             then not testCaseEquality
             else testCaseEquality

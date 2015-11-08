@@ -280,18 +280,25 @@ compareOptSpecificity optA optB = case optA of
 -- | Sort an OptPattern such that more-specific patterns come first,
 --   while leaving the semantics of the pattern structure unchanged.
 eagerSort :: OptPattern -> OptPattern
-eagerSort pat =
-  case pat of
-    Sequence ps  -> Sequence $ map eagerSort ps
-    OneOf ps     -> OneOf $   map eagerSort
-                            . sortBy (comparing $ Down . maxLength)
-                            . sortBy (comparing representativeAtom)
-                            $ ps
-    Unordered ps -> Unordered $ map eagerSort ps
-    Optional p   -> Optional $ eagerSort p
-    Repeated p   -> Repeated $ eagerSort p
-    a@(Atom _)   -> a
+eagerSort pat = case pat of
+    -- We special-case a top-level `OneOf` here because that's how
+    -- the list of individual pattern lines are represented, and we
+    -- never want to reorder those. This is inelegant, but effective
+    -- enough for now.
+    OneOf ps -> OneOf $ map innerSort ps
+    a -> innerSort a
   where
+    innerSort ipat = case ipat of
+      Sequence ps  -> Sequence $ map innerSort ps
+      OneOf ps     -> OneOf $   map innerSort
+                              . sortBy (comparing $ Down . maxLength)
+                              . sortBy (comparing representativeAtom)
+                              $ ps
+      Unordered ps -> Unordered $ map innerSort ps
+      Optional p   -> Optional $ innerSort p
+      Repeated p   -> Repeated $ innerSort p
+      a@(Atom _)   -> a
+
     representativeAtom :: OptPattern -> Option
     representativeAtom p = case p of
       Sequence ps  -> if null ps then AnyOption else representativeAtom $ head ps
@@ -300,6 +307,7 @@ eagerSort pat =
       Optional p   -> representativeAtom p
       Repeated p   -> representativeAtom p
       Atom a       -> a
+
     maxLength :: OptPattern -> Int
     maxLength p = case p of
       Sequence ps  -> sum $ map maxLength ps
@@ -311,5 +319,5 @@ eagerSort pat =
         LongOption o  -> length o
         ShortOption _ -> 1
         Command c     -> length c
-        Argument a    -> length a
+        Argument a    -> 100
         AnyOption     -> 0

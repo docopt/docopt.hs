@@ -139,7 +139,7 @@ Usage Patterns
 
 - #### `[-]` and `[--]`
 
-  Single hyphen `-` is used by convention to specify using `stdin` as input instead of reading a file. Double hyphen `--` is typically used to manually separate leading options from trailing positional arguments. Both of these are treated as `command`s, and so are perfectly legal in usage patterns. They are typically optional elements, but can be required if you drop the `[]`.
+  Single hyphen `-` is used by convention to specify using `stdin` as input instead of reading a file. Double hyphen `--` is typically used to manually separate leading options from trailing positional arguments. Both of these are treated as `command`s, and so are perfectly legal in usage patterns. They are typically optional elements, but can be required if you drop the `[]`. These are treated as commands and can be matched with `command "-"` or `command "--"`, whether they're wrapped `[-]` or not.
 
 Option descriptions
 -------------------

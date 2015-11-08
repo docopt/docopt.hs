@@ -169,6 +169,8 @@ getArgCount args opt =
 ----------------------
 
 -- | For @Usage: prog cmd@, ask for @command \"cmd\"@.
+--
+--   For @Usage: prog -@ or @Usage: prog [-]@, ask for @command \"-\"@. Same for @--@.
 command :: String -> Option
 command = Command
 

@@ -22,6 +22,7 @@ Then, in your `Myprog.hs`:
 
 ```haskell
 {-# LANGUAGE QuasiQuotes #-}
+
 import Control.Monad (when)
 import Data.Char (toUpper)
 import System.Environment (getArgs)
@@ -30,20 +31,20 @@ import System.Console.Docopt
 patterns :: Docopt
 patterns = [docoptFile|USAGE.txt|]
 
-getArgOrDie = getArgOrDieWith patterns
+getArgOrExit = getArgOrExitWith patterns
 
 main = do
-  args <- parseArgsOrDie patterns =<< getArgs
+  args <- parseArgsOrExit patterns =<< getArgs
 
   when (args `isPresent` (command "cat")) $ do
-    file <- args `getArgOrDieWith` (argument "file")
+    file <- args `getArgOrExit` (argument "file")
     putStr =<< readFile file
 
   when (args `isPresent` (command "echo")) $ do
     let charTransform = if args `isPresent` (longOption "caps")
                           then toUpper
                           else id
-    string <- args `getArgOrDieWith` (argument "string")
+    string <- args `getArgOrExit` (argument "string")
     putStrLn $ map charTransform string
 ```
 

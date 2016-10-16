@@ -14,7 +14,7 @@ import System.Exit
 import System.Console.Docopt.Types
 import System.Console.Docopt.Public
 import System.Console.Docopt.ParseUtils
-import System.Console.Docopt.UsageParse (pDocopt)
+import System.Console.Docopt.UsageParse (pDocopt, trimEmptyLines)
 
 
 -- | Parse docopt-formatted usage patterns.
@@ -22,8 +22,9 @@ import System.Console.Docopt.UsageParse (pDocopt)
 --   For help with the docopt usage format, see
 --   <https://github.com/docopt/docopt.hs/blob/master/README.md#help-text-format the readme on github>.
 parseUsage :: String -> Either ParseError Docopt
-parseUsage usg =
-  case runParser pDocopt M.empty "Usage" usg of
+parseUsage rawUsg =
+  let usg = trimEmptyLines rawUsg
+  in case runParser pDocopt M.empty "Usage" usg of
     Left e       -> Left e
     Right optfmt -> Right (Docopt optfmt usg)
 
@@ -32,7 +33,8 @@ parseUsage usg =
 -- > let usageStr = "Usage:\n  prog [--option]\n"
 -- > patterns <- parseUsageOrDie usageStr
 parseUsageOrDie :: String -> IO Docopt
-parseUsageOrDie usg = exitUnless $ parseUsage usg
+parseUsageOrDie rawUsg = exitUnless $ parseUsage usg
   where
+    usg = trimEmptyLines rawUsg
     die msg = putStr msg >> exitFailure
     exitUnless = either (const $ die usg) return

@@ -4,7 +4,7 @@ module System.Console.Docopt.UsageParse
 import qualified Data.Map as M
 import           Data.Ord (comparing)
 import           GHC.Exts (Down(..))
-import           Data.List (nub, sortBy, maximumBy)
+import           Data.List (nub, sortBy, maximumBy, dropWhile, dropWhileEnd)
 
 import System.Console.Docopt.ParseUtils
 import System.Console.Docopt.Types
@@ -24,6 +24,12 @@ flatSequence = flatten . Sequence
 
 flatOneOf :: [Pattern a] -> Pattern a
 flatOneOf = flatten . OneOf
+
+trimEmptyLines :: String -> String
+trimEmptyLines s = trimmed s ++ "\n"
+  where
+    isNewline = (== '\n')
+    trimmed = dropWhile isNewline . dropWhileEnd isNewline
 
 
 -- * Pattern Parsers

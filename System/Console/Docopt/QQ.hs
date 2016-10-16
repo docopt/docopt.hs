@@ -21,7 +21,8 @@ parseFmt :: FilePath -> String -> Either ParseError OptFormat
 parseFmt = runParser pDocopt M.empty
 
 docoptExp :: String -> Q Exp
-docoptExp usg = do
+docoptExp rawUsg = do
+  let usg = trimEmptyLines rawUsg
   let mkDocopt fmt = Docopt { usage = usg, optFormat = fmt }
   loc <- loc_filename <$> location
   case mkDocopt <$> parseFmt loc usg of

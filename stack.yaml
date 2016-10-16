@@ -7,5 +7,12 @@ packages:
   - '.'
   - examples/
 
+# Uncomment to test https://github.com/docopt/docopt.hs/issues/29
+# extra-deps:
+#   - aeson-1.0.2.0
+# flags:
+#   aeson:
+#     fast: true
+
 nix:
   enable: true

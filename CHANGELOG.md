@@ -9,7 +9,7 @@
   - Add `dieWithUsageMessage`, which prints to stderr and exits with 1
   - Rename `getArgOrExitWith` to `getArgOrDieWith`
 - Fix an issue where in some cases pattern lines were matched out of order
-
+- Fix tests run against latest aeson 1.0.2.0 [#29]
 
 ### 0.7.0.4
 

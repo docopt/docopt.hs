@@ -30,7 +30,7 @@ instance ToJSON ArgValue where
     Present       -> toJSON True
     NotPresent    -> toJSON False
 
-instance ToJSON (Map Option ArgValue) where
+instance {-# OVERLAPPING #-} ToJSON (Map Option ArgValue) where
   toJSON argmap =
     let argmap' = M.mapKeys humanize argmap
     in  toJSON argmap'

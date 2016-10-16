@@ -21,6 +21,7 @@ extra-source-files:  README.md
                      CHANGELOG.md
 
 data-files:          test/testcases.docopt
+                     test/regressions.txt
 
 source-repository head
   type:       git
@@ -42,8 +43,8 @@ library
                       System.Console.Docopt.OptParse
                       System.Console.Docopt.Public
 
-  build-depends:      base == 4.*,
-                      parsec == 3.1.*,
+  build-depends:      base >= 4.0,
+                      parsec >= 3.1.0,
                       containers
 
   ghc-options:        -Wall
@@ -56,8 +57,8 @@ library
     exposed-modules:  System.Console.Docopt
     other-modules:    System.Console.Docopt.QQ
                       System.Console.Docopt.QQ.Instances
-    build-depends:    template-haskell >= 2.7 && < 3.0,
-                      th-lift >= 0.7 && < 1.0
+    build-depends:    template-haskell,
+                      th-lift
 
 test-suite tests
   type:               exitcode-stdio-1.0
@@ -71,22 +72,26 @@ test-suite tests
                       -fno-warn-name-shadowing
                       -fno-warn-orphans
 
-  build-depends:      base == 4.*,
-                      parsec == 3.1.*,
+  build-depends:      base,
+                      parsec,
                       containers,
                       docopt,
                       HUnit,
-                      split >= 0.2.2,
-                      ansi-terminal >= 0.6,
-                      aeson >= 0.8,
-                      bytestring == 0.10.*,
+                      split,
+                      ansi-terminal,
+                      aeson,
+                      bytestring,
+                      text,
                       template-haskell,
                       th-lift
 
-  other-modules:      System.Console.Docopt.ApplicativeParsec,
-                      System.Console.Docopt.ParseUtils,
-                      System.Console.Docopt.Types,
-                      System.Console.Docopt.UsageParse,
-                      System.Console.Docopt.OptParse,
-                      System.Console.Docopt.Public,
+  other-modules:      System.Console.Docopt
+                      System.Console.Docopt.ApplicativeParsec
+                      System.Console.Docopt.ParseUtils
+                      System.Console.Docopt.Types
+                      System.Console.Docopt.UsageParse
+                      System.Console.Docopt.OptParse
+                      System.Console.Docopt.Public
+                      System.Console.Docopt.QQ
+                      System.Console.Docopt.QQ.Instances
                       Paths_docopt

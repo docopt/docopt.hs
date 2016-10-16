@@ -20,3 +20,4 @@ cabal.sandbox.config
 
 # extra
 tmp
+.stack-work

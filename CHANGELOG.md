@@ -1,6 +1,6 @@
-# Unreleased
+### 0.7.0.5
 
-- Fix an issue where in some cases pattern lines were matched out of order
+- Fix an issue where in some cases pattern lines were matched out of order [#16]
 - Strip leading & trailing newlines from usage, for quasiquoter ease [#28]
 - Fix tests run against latest aeson 1.0.2.0 [#29]
 

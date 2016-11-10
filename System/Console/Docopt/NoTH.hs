@@ -2,7 +2,7 @@ module System.Console.Docopt.NoTH
   (
     -- * Usage parsers
       parseUsage
-    , parseUsageOrDie
+    , parseUsageOrExit
 
     , module System.Console.Docopt.Public
   )
@@ -28,13 +28,13 @@ parseUsage rawUsg =
     Left e       -> Left e
     Right optfmt -> Right (Docopt optfmt usg)
 
--- | Same as 'parseUsage', but 'dieWithUsage' on parse failure. E.g.
+-- | Same as 'parseUsage', but 'exitWithUsage' on parse failure. E.g.
 --
 -- > let usageStr = "Usage:\n  prog [--option]\n"
--- > patterns <- parseUsageOrDie usageStr
-parseUsageOrDie :: String -> IO Docopt
-parseUsageOrDie rawUsg = exitUnless $ parseUsage usg
+-- > patterns <- parseUsageOrExit usageStr
+parseUsageOrExit :: String -> IO Docopt
+parseUsageOrExit rawUsg = exitUnless $ parseUsage usg
   where
     usg = trimEmptyLines rawUsg
-    die msg = putStr msg >> exitFailure
-    exitUnless = either (const $ die usg) return
+    exit message = putStrLn message >> exitFailure
+    exitUnless = either (const $ exit usg) return

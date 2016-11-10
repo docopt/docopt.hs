@@ -1,13 +1,5 @@
 # Unreleased
 
-- Print usage to stderr instead of stdout on parse failure [#22]
-  Generally, functions have been added or renamed to reflect this principle: those with `exit` in the name exit with 0 and print to stdout, where those with `die` in the name exit with 1 and print to stderr.
-  - Rename `parseArgsOrExit` to `parseArgsOrDie`
-  - Make `exitWithUsage` exit with success (0), not failure
-  - Add `dieWithUsage`, which prints to stderr and exits with 1
-  - Make `exitWithUsageMessage` exit with success (0), not failure
-  - Add `dieWithUsageMessage`, which prints to stderr and exits with 1
-  - Rename `getArgOrExitWith` to `getArgOrDieWith`
 - Fix an issue where in some cases pattern lines were matched out of order
 - Strip leading & trailing newlines from usage, for quasiquoter ease [#28]
 - Fix tests run against latest aeson 1.0.2.0 [#29]

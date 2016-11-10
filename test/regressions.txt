@@ -15,3 +15,57 @@ r"""Usage:
 """
 $ prog --help
 {"<bar>":"--help", "--help":false}
+
+
+# Issue #25: Repeatable options should be counted
+r"""Usage:
+  prog (-v | -vv)
+
+"""
+$ prog -v
+{"-v": 1}
+
+$ prog -vv
+{"-v": 2}
+
+
+# Issue #25: Repeatable options should be counted
+r"""Usage:
+  prog [--verbose]...
+
+Options:
+  --verbose, -v      verbosity
+"""
+$ prog --verbose
+{"--verbose": 1, "-v": 1}
+
+$ prog -vv
+{"--verbose": 2, "-v": 2}
+
+
+# Issue #25: Repeatable options with values should be collected
+r"""Usage:
+  prog [--include]...
+
+Options:
+  --include=<i>, -I    stuff to include
+"""
+$ prog -I foo
+{"--include": ["foo"], "-I": ["foo"]}
+
+$ prog -I foo -I bar
+{"--include": ["foo","bar"], "-I": ["foo","bar"]}
+
+
+# Issue #25: Repeatable options with values should be collected
+r"""Usage:
+  prog [options]...
+
+Options:
+  --include=<i>, -I    stuff to include
+"""
+$ prog -I foo
+{"--include": ["foo"], "-I": ["foo"]}
+
+$ prog -I foo -I bar
+{"--include": ["foo","bar"], "-I": ["foo","bar"]}

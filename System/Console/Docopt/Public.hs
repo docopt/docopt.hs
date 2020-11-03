@@ -190,7 +190,7 @@ isPresentM :: Monad m => Arguments -> Option -> m Bool
 isPresentM args o = return $ isPresent args o
 
 {-# DEPRECATED getFirstArg "Use 'getAllArgs' instead" #-}
-getFirstArg :: Monad m => Arguments -> Option -> m String
+getFirstArg :: MonadFail m => Arguments -> Option -> m String
 getFirstArg args opt =
   let failure = fail $ "no argument given: " ++ show opt
   in  case opt `M.lookup` args of

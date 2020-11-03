@@ -56,7 +56,9 @@ docopt = QuasiQuoter { quoteExp  = docoptExp
                      , quotePat  = unsupported "Pattern"
                      , quoteType = unsupported "Type"
                      }
-    where unsupported = fail . (++ " context unsupported")
+    where unsupported :: String -> String -> Q a
+          unsupported qqType _ = do
+            fail $ (qqType ++ " context unsupported")
 
 -- | Same as 'docopt', but parses the given file instead of a literal
 -- string.

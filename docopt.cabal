@@ -43,7 +43,7 @@ library
                       System.Console.Docopt.OptParse
                       System.Console.Docopt.Public
 
-  build-depends:      base >= 4.0 && < 5.0,
+  build-depends:      base >= 4.9 && < 5.0,
                       parsec >= 3.1.0,
                       containers
 

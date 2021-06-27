@@ -1,6 +1,6 @@
 ### 0.7.0.6
 
-- Fix issue cause compilation error to happen with ghc-8.8.2 [#33][#34]
+- Fixes issue causing compilation error to happen with ghc-8.8.2 [#33][#34]
 
 ### 0.7.0.5
 

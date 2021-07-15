@@ -12,7 +12,7 @@ copyright:           (c) 2013-2015 Ryan Artecona
 category:            Console
 
 build-type:          Simple
-cabal-version:       >=1.8
+cabal-version:       >=1.10
 
 homepage:            https://github.com/docopt/docopt.hs
 bug-reports:         https://github.com/docopt/docopt.hs/issues

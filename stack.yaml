@@ -14,5 +14,5 @@ packages:
 #   aeson:
 #     fast: true
 
-nix:
-  enable: true
+# nix:
+#   enable: true

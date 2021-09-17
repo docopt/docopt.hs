@@ -4,7 +4,7 @@ module System.Console.Docopt.UsageParse
 import qualified Data.Map as M
 import           Data.Ord (comparing)
 import           GHC.Exts (Down(..))
-import           Data.List (nub, sortBy, maximumBy, dropWhile, dropWhileEnd)
+import           Data.List (nub, sortBy, maximumBy, dropWhileEnd)
 
 import System.Console.Docopt.ParseUtils
 import System.Console.Docopt.Types

@@ -57,8 +57,7 @@ library
     exposed-modules:  System.Console.Docopt
     other-modules:    System.Console.Docopt.QQ
                       System.Console.Docopt.QQ.Instances
-    build-depends:    template-haskell >= 2.15.0 && < 2.17,
-                      th-lift >= 0.8.2 && < 0.9
+    build-depends:    template-haskell >= 2.15.0 && < 2.17
 
   default-language:   Haskell2010
 
@@ -84,8 +83,7 @@ test-suite tests
                       aeson,
                       bytestring,
                       text,
-                      template-haskell >= 2.15.0 && < 2.16,
-                      th-lift >= 0.8.2 && < 0.9
+                      template-haskell >= 2.15.0 && < 2.16
 
   other-modules:      System.Console.Docopt
                       System.Console.Docopt.ApplicativeParsec

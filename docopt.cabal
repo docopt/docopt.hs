@@ -57,8 +57,10 @@ library
     exposed-modules:  System.Console.Docopt
     other-modules:    System.Console.Docopt.QQ
                       System.Console.Docopt.QQ.Instances
-    build-depends:    template-haskell >= 2.15.0 && < 2.16,
+    build-depends:    template-haskell >= 2.15.0 && < 2.17,
                       th-lift >= 0.8.2 && < 0.9
+
+  default-language:   Haskell2010
 
 test-suite tests
   type:               exitcode-stdio-1.0
@@ -95,3 +97,5 @@ test-suite tests
                       System.Console.Docopt.QQ
                       System.Console.Docopt.QQ.Instances
                       Paths_docopt
+
+  default-language:   Haskell2010

@@ -1,19 +1,15 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DeriveLift#-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# OPTIONS_HADDOCK hide, prune #-}
+
 module System.Console.Docopt.QQ.Instances where
 
 import System.Console.Docopt.Types
-import Language.Haskell.TH.Lift
+import Language.Haskell.TH.Syntax (Lift)
+import Data.Map.Internal (Map(..))
 
-import qualified Data.Map as M
-
-instance (Lift k, Lift v) => Lift (M.Map k v) where
-    lift m = [| M.fromList assoc |]
-        where assoc = M.toList m
-
-$(deriveLiftMany [ ''Option
-                 , ''Pattern
-                 , ''OptionInfo
-                 , ''Docopt
-                 ])
+deriving instance Lift (Map Option OptionInfo)
+deriving instance Lift (Docopt)

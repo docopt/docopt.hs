@@ -1,3 +1,7 @@
+### 0.7.0.7 (unreleased)
+
+- update bounds, fix warnings, require ghc 8.0+
+
 ### 0.7.0.6
 
 - Fixes issue causing compilation error to happen with ghc-8.8.2 [#33][#34]

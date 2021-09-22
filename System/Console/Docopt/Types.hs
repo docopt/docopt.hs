@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveLift#-}
 module System.Console.Docopt.Types
     where
 
@@ -5,7 +6,7 @@ import           Data.Char (isUpper)
 import           Data.List (nub)
 import           Data.Map (Map)
 import qualified Data.Map as M
-
+import Language.Haskell.TH.Syntax (Lift)
 
 -- * Usage expression Types
 
@@ -17,7 +18,7 @@ data Pattern a = Sequence [Pattern a]
                | Optional (Pattern a)
                | Repeated (Pattern a)
                | Atom a
-               deriving (Show, Eq)
+               deriving (Show, Eq, Lift)
 
 atoms :: Eq a => Pattern a -> [a]
 atoms (Sequence ps)  = concatMap atoms ps
@@ -33,7 +34,7 @@ data Option = LongOption Name
             | Command Name
             | Argument Name
             | AnyOption
-            deriving (Show, Eq, Ord)
+            deriving (Show, Eq, Ord, Lift)
 
 type OptPattern = Pattern Option
 
@@ -57,7 +58,7 @@ data OptionInfo = OptionInfo
                   , defaultVal :: Maybe String
                   , expectsVal :: Bool
                   , isRepeated :: Bool
-                  } deriving (Show, Eq)
+                  } deriving (Show, Eq, Lift)
 
 fromSynList :: [Option] -> OptionInfo
 fromSynList opts = OptionInfo { synonyms = opts

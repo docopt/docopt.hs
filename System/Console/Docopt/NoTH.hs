@@ -26,7 +26,7 @@ parseUsage rawUsg =
   let usg = trimEmptyLines rawUsg
   in case runParser pDocopt M.empty "Usage" usg of
     Left e       -> Left e
-    Right optfmt -> Right (Docopt optfmt usg)
+    Right (short_usg,optfmt) -> Right (Docopt optfmt short_usg usg)
 
 -- | Same as 'parseUsage', but 'exitWithUsage' on parse failure. E.g.
 --

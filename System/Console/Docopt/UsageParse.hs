@@ -145,13 +145,16 @@ pUsageLine =
         many1 (satisfy (not . isSpace)) -- prog name
         pLine
 
-pUsagePatterns :: CharParser OptInfoMap OptPattern
+pUsagePatterns :: CharParser OptInfoMap (String,OptPattern)
 pUsagePatterns = do
         many (notFollowedBy pUsageHeader >> anyChar)
-        pUsageHeader
+        header <- pUsageHeader
         optionalEndline
+        usageLines_str <- fmap (unlines . (header:)) . lookAhead $ many $ try $ do
+            lookAhead $ pUsageLine
+            manyTill anyChar $ try $ eof <|> (const () <$> endline)
         usageLines <- pUsageLine `sepEndBy` endline
-        return $ flatten . OneOf $ usageLines
+        return $ (usageLines_str, flatten . OneOf $ usageLines)
 
 -- * Option Synonyms & Defaults Parsers
 
@@ -204,16 +207,16 @@ pOptDescriptions = do
 -- | Main usage parser: parses all of the usage lines into an Exception,
 --   and all of the option descriptions along with any accompanying
 --   defaults, and returns both in a tuple
-pDocopt :: CharParser OptInfoMap OptFormat
+pDocopt :: CharParser OptInfoMap (String,OptFormat)
 pDocopt = do
-    optPattern <- pUsagePatterns
+    (usage_str,optPattern) <- pUsagePatterns
     optInfoMap <- pOptDescriptions
     let optPattern' = eagerSort $ expectSynonyms optInfoMap optPattern
         saveCanRepeat pat el minfo = case minfo of
           (Just info) -> Just $ info {isRepeated = canRepeat pat el}
           (Nothing)   -> Just $ (fromSynList []) {isRepeated = canRepeat pat el}
         optInfoMap' = alterAllWithKey (saveCanRepeat optPattern') (atoms optPattern') optInfoMap
-    return (optPattern', optInfoMap')
+    return (usage_str,(optPattern', optInfoMap'))
 
 
 -- ** Pattern transformation & analysis

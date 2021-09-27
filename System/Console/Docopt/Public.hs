@@ -10,6 +10,7 @@ module System.Console.Docopt.Public
     -- * Parsed usage string
     , Docopt ()
     , usage
+    , exitWithHelpstring
     , exitWithUsage
     , exitWithUsageMessage
 
@@ -47,6 +48,7 @@ import Data.Maybe (fromMaybe)
 import System.Console.Docopt.Types
 import System.Console.Docopt.ApplicativeParsec (ParseError)
 import System.Console.Docopt.OptParse
+import Control.Monad (when)
 
 
 -- | Parse command line arguments.
@@ -57,11 +59,22 @@ parseArgs parser = getArguments (optFormat parser)
 --
 -- > args <- parseArgsOrExit patterns =<< getArgs
 parseArgsOrExit :: Docopt -> [String] -> IO Arguments
-parseArgsOrExit parser argv = either (const $ exitWithUsage parser) return $ parseArgs parser argv
+parseArgsOrExit parser argv = do
+    opts <- either (const $ exitWithUsage parser) return $ parseArgs parser argv
+    when (opts `isPresent` (longOption "help")) $ do
+        exitWithHelpstring parser
+    return opts
+
 
 -- | Exit after printing usage text.
 exitWithUsage :: Docopt -> IO a
 exitWithUsage doc = do
+  putStr $ shortUsage doc
+  exitFailure
+
+-- | Exit after printing the helpstring.
+exitWithHelpstring :: Docopt -> IO a
+exitWithHelpstring doc = do
   putStr $ usage doc
   exitFailure
 

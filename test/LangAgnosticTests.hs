@@ -116,7 +116,7 @@ testsFromDocoptSpecFile name testFile ignore =
 
     let (optFormat, docParseMsg) = case runParser pDocopt M.empty "Usage" usage of
           Left e -> ((Sequence [], M.empty), "Couldn't parse usage text")
-          Right o -> (o, "")
+          Right (_,o) -> (o, "")
 
     let groupDescLines = [
             docParseMsg,

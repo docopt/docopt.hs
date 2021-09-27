@@ -17,15 +17,15 @@ import System.Console.Docopt.UsageParse
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote
 
-parseFmt :: FilePath -> String -> Either ParseError OptFormat
+parseFmt :: FilePath -> String -> Either ParseError (String,OptFormat)
 parseFmt = runParser pDocopt M.empty
 
 docoptExp :: String -> Q Exp
 docoptExp rawUsg = do
   let usg = trimEmptyLines rawUsg
-  let mkDocopt fmt = Docopt { usage = usg, optFormat = fmt }
+  let mkDocopt short_usg fmt = Docopt { usage = usg, shortUsage = short_usg, optFormat = fmt }
   loc <- loc_filename <$> location
-  case mkDocopt <$> parseFmt loc usg of
+  case uncurry mkDocopt <$> parseFmt loc usg of
     Left err     -> fail $ show err
     Right parser -> [| parser |]
 

@@ -55,5 +55,3 @@ navalFateDispatchArgs doc opts = do
     exitSuccess
   when (opts `isPresent` (longOption "version")) $ do
     putStrLn "Naval Fate v0.0.0.0.0.1.0"
-  when (opts `isPresent` (longOption "help")) $ do
-    exitWithUsage doc

@@ -103,6 +103,8 @@ type Arguments = Map Option ArgValue
 
 -- | An abstract data type which represents Docopt usage patterns.
 data Docopt = Docopt { optFormat :: OptFormat
+                     -- | Retrieve the "Usage:" section of the usage string.
+                     , shortUsage :: String
                      -- | Retrieve the original usage string.
                      , usage :: String
-                     }
+                     } deriving(Show)

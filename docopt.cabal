@@ -27,14 +27,9 @@ source-repository head
   type:       git
   location:   https://github.com/docopt/docopt.hs.git
 
-flag template-haskell
-  default:      True
-  manual:       True
-  description:
-    Build with QuasiQuoter usage parsers, which requires Template Haskell
-
 library
   exposed-modules:    System.Console.Docopt.NoTH
+                      System.Console.Docopt
 
   other-modules:      System.Console.Docopt.ApplicativeParsec
                       System.Console.Docopt.ParseUtils
@@ -42,22 +37,19 @@ library
                       System.Console.Docopt.UsageParse
                       System.Console.Docopt.OptParse
                       System.Console.Docopt.Public
+                      System.Console.Docopt.QQ
+                      System.Console.Docopt.QQ.Instances
 
   build-depends:      base >= 4.9 && < 5.0,
                       parsec >= 3.1.14 && < 3.2,
-                      containers >= 0.6.2 && < 0.6.6
+                      containers >= 0.6.2 && < 0.6.6,
+                      template-haskell >= 2.11.0 && < 2.18
 
   ghc-options:        -Wall
                       -fno-warn-unused-binds
                       -fno-warn-unused-do-bind
                       -fno-warn-unused-matches
                       -fno-warn-name-shadowing
-
-  if impl(ghc >= 6.10) && flag(template-haskell)
-    exposed-modules:  System.Console.Docopt
-    other-modules:    System.Console.Docopt.QQ
-                      System.Console.Docopt.QQ.Instances
-    build-depends:    template-haskell >= 2.11.0 && < 2.18
 
   default-language:   Haskell2010
 
@@ -83,7 +75,7 @@ test-suite tests
                       aeson,
                       bytestring,
                       text,
-                      template-haskell >= 2.11.0 && < 2.18
+                      template-haskell
 
   other-modules:      System.Console.Docopt
                       System.Console.Docopt.ApplicativeParsec

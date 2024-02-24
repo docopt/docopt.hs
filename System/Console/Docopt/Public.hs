@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 module System.Console.Docopt.Public
   (
     -- * Command line arguments parsers
@@ -41,6 +43,10 @@ module System.Console.Docopt.Public
   where
 
 import System.Exit
+
+#if !MIN_VERSION_base(4,13,0)
+import Control.Monad.Fail (MonadFail)
+#endif
 
 import Data.Map as M hiding (null)
 import Data.Maybe (fromMaybe)

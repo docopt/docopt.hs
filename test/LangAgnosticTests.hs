@@ -1,5 +1,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 
+-- TODO: Remove orphan instances?
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 import Control.Monad ( (>=>) )
 import System.Exit
 import System.Console.ANSI
@@ -104,18 +107,20 @@ testsFromDocoptSpecFile :: String
                         -> ((Int, Int) -> Bool)
                         -> IO [Test]
 testsFromDocoptSpecFile name testFile ignore =
-  let notCommentLine x = null x || ('#' /= head x)
+  let notCommentLine x = case x of {[] -> True; (c:_) -> '#' /= c}
       testFileClean = unlines $ filter notCommentLine $ lines testFile
       caseGroups = filter (not . null) $ splitOn "r\"\"\"" testFileClean
 
   in
   return . (:[]) . TestLabel name . test $ zip caseGroups [(1 :: Int)..] >>= \(caseGroup, icg) -> do
 
-    let [usage, rawCases] = splitOn "\"\"\"" caseGroup
+    let (usage, rawCases) = case splitOn "\"\"\"" caseGroup of
+          [u, r] -> (u, r)
+          _ -> error $ "Unexpected format of 'caseGroup': " ++ caseGroup
         cases = filter (/= "\n") $ splitOn "$ " rawCases
 
     let (optFormat, docParseMsg) = case runParser pDocopt M.empty "Usage" usage of
-          Left e -> ((Sequence [], M.empty), "Couldn't parse usage text")
+          Left _e -> ((Sequence [], M.empty), "Couldn't parse usage text")
           Right o -> (o, "")
 
     let groupDescLines = [
@@ -131,9 +136,9 @@ testsFromDocoptSpecFile name testFile ignore =
       let (cmdline, rawTarget_) = break (== '\n') testcase
           rawTarget = filter (/= '\n') rawTarget_
           maybeTargetJSON = decode (BS.pack rawTarget) :: Maybe Value
-          rawArgs = tail $ words cmdline
+          rawArgs = drop 1 (words cmdline)
 
-      let (parsedArgs, argParseMsg) = case getArguments optFormat rawArgs of
+      let (parsedArgs, _argParseMsg) = case getArguments optFormat rawArgs of
             Left e -> (M.empty, "Parse Error: " ++ red (show e) ++ "\n")
             Right a -> (a, "")
 

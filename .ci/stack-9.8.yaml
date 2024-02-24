@@ -1,0 +1,3 @@
+resolver: nightly-2024-02-24
+ghc-options:
+  "$locals": -Werror -Wall -Wcompat -Wno-name-shadowing

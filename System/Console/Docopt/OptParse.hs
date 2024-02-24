@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-unused-do-bind #-}
+
 module System.Console.Docopt.OptParse
   where
 
@@ -15,7 +17,7 @@ import System.Console.Docopt.Types
 --   @fmt@ is the OptPattern together with metadata to tell the parser how to parse args.
 --   Together, these let @buildOptParser@ build a parsec parser that can be applied to an argv.
 buildOptParser :: String -> OptFormat -> CharParser OptParserState ()
-buildOptParser delim fmt@(pattern, infomap) =
+buildOptParser delim (pattern, infomap) =
 
   let -- Helpers
       argDelim = (try $ string delim) <?> "space between arguments"
@@ -124,7 +126,7 @@ buildOptParser delim fmt@(pattern, infomap) =
                 unorderedSynParser = buildOptParser delim (Unordered oneOfSyns, infomap)
             in  unorderedSynParser
                 <?> humanize o
-      o@(Argument name) ->
+      o@(Argument _name) ->
             do val <- try $ many1 (notFollowedBy argDelim >> anyChar)
                updateSt_saveOccurrence o val
                updateSt_inShortOptStack False
@@ -157,7 +159,7 @@ saveOccurrence opt info newval argmap = M.alter updateCurrentVal opt argmap
             Just oldval -> newval `updateFrom` oldval
           updateFrom newval oldval = Just $ case oldval of
             MultiValue vs -> MultiValue $ newval : vs
-            Value v       -> Value newval
+            Value _v      -> Value newval
             NoValue       -> Value newval
             Counted n     -> Counted (n+1)
             Present       -> Present
@@ -185,10 +187,10 @@ optInitialValue :: OptionInfo -> Option -> Maybe ArgValue
 optInitialValue info opt =
   let repeatable = isRepeated info
   in case opt of
-    Command name  -> Just $ if repeatable then Counted 0 else NotPresent
-    Argument name -> Just $ if repeatable then MultiValue [] else NoValue
-    AnyOption     -> Nothing -- no storable value for [options] shortcut
-    _             -> case expectsVal info of
+    Command _name  -> Just $ if repeatable then Counted 0 else NotPresent
+    Argument _name -> Just $ if repeatable then MultiValue [] else NoValue
+    AnyOption      -> Nothing -- no storable value for [options] shortcut
+    _              -> case expectsVal info of
       True  -> Just $ if repeatable then MultiValue [] else NoValue
       False -> Just $ if repeatable then Counted 0 else NotPresent
 
@@ -196,10 +198,10 @@ optDefaultValue :: OptionInfo -> Option -> Maybe ArgValue
 optDefaultValue info opt =
   let repeatable = isRepeated info
   in case opt of
-    Command name  -> Just $ if repeatable then Counted 0 else NotPresent
-    Argument name -> Just $ if repeatable then MultiValue [] else NoValue
-    AnyOption     -> Nothing -- no storable value for [options] shortcut
-    _               -> case expectsVal info of
+    Command _name  -> Just $ if repeatable then Counted 0 else NotPresent
+    Argument _name -> Just $ if repeatable then MultiValue [] else NoValue
+    AnyOption      -> Nothing -- no storable value for [options] shortcut
+    _              -> case expectsVal info of
       True  -> case defaultVal info of
         Just dval -> Just $ if repeatable
                             then MultiValue $ reverse $ words dval

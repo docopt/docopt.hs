@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-unused-do-bind #-}
+
 module System.Console.Docopt.UsageParse
   where
 
@@ -71,9 +73,9 @@ pStackedShortOption = try $ do
         firstPairs = map (\x -> (x,False)) firstChars
         lastPair = (lastChar, lastExpectsVal)
     saveOptionsExpectVal ShortOption (firstPairs ++ [lastPair])
-    case length chars of
-      0 -> fail ""
-      1 -> return $ Atom . ShortOption $ head chars
+    case chars of
+      []  -> fail ""
+      [c] -> return $ Atom . ShortOption $ c
       _ -> return $ Unordered $ map (Atom . ShortOption) chars
 
 pLongOption :: CharParser OptInfoMap (Name, Bool)
@@ -97,9 +99,9 @@ pOptionArgument = option False $ try $ do
 pArgument :: CharParser OptInfoMap String
 pArgument = try bracketStyle <|> try upperStyle
             where bracketStyle = do
-                      open <- char '<'
+                      _open <- char '<'
                       name <- many $ oneOf alphanumSpecial
-                      close <- char '>'
+                      _close <- char '>'
                       return name
                   upperStyle = do
                       first <- oneOf uppers
@@ -224,15 +226,16 @@ expectSynonyms oim (OneOf exs)     = OneOf $ map (expectSynonyms oim) exs
 expectSynonyms oim (Unordered exs) = Unordered $ map (expectSynonyms oim) exs
 expectSynonyms oim (Optional ex)   = Optional $ expectSynonyms oim ex
 expectSynonyms oim (Repeated ex)   = Repeated $ expectSynonyms oim ex
-expectSynonyms oim a@(Atom atom)   = case atom of
-    e@(Command ex)     -> a
-    e@(Argument ex)    -> a
-    e@AnyOption        -> flatten $ Unordered $ nub $ map Atom $ concatMap synonyms (M.elems oim)
-    e@(LongOption ex)  ->
+expectSynonyms oim a@(Atom atom)   =
+  case atom of
+    Command _ex      -> a
+    Argument _ex     -> a
+    AnyOption        -> flatten $ Unordered $ nub $ map Atom $ concatMap synonyms (M.elems oim)
+    e@(LongOption _ex) ->
         case synonyms <$> e `M.lookup` oim of
           Just syns -> flatten . OneOf $ map Atom syns
           Nothing -> a
-    e@(ShortOption c)  ->
+    e@(ShortOption _c) ->
         case synonyms <$> e `M.lookup` oim of
           Just syns -> flatten . OneOf $ map Atom syns
           Nothing -> a
@@ -244,8 +247,8 @@ canRepeat pat target =
     (OneOf ps)     -> canRepeatInside ps
     (Unordered ps) -> canRepeatInside ps || (atomicOccurrences ps > 1)
     (Optional p)   -> canRepeat p target
-    (Repeated p)   -> target `elem` atoms pat
-    (Atom a)       -> False
+    (Repeated _p)  -> target `elem` atoms pat
+    (Atom _a)      -> False
   where canRepeatInside = any (`canRepeat` target)
         atomicOccurrences ps = length $ filter (== target) $ atoms $ Sequence ps
 
@@ -261,14 +264,14 @@ compareOptSpecificity optA optB = case optA of
       LongOption b  -> comparingFirst length a b
       _             -> GT
     ShortOption a -> case optB of
-      LongOption b  -> LT
+      LongOption _b -> LT
       ShortOption b -> compare a b
       _             -> GT
     Command a     -> case optB of
-      LongOption b  -> LT
-      ShortOption b -> LT
-      Command b     -> comparingFirst length a b
-      _             -> GT
+      LongOption _b  -> LT
+      ShortOption _b -> LT
+      Command b      -> comparingFirst length a b
+      _              -> GT
     Argument a    -> case optB of
       AnyOption     -> GT
       Argument b    -> comparingFirst length a b
@@ -307,12 +310,13 @@ eagerSort pat = case pat of
 
     representativeAtom :: OptPattern -> Option
     representativeAtom p = case p of
-      Sequence ps  -> if null ps then AnyOption else representativeAtom $ head ps
-      OneOf ps     -> maximumBy compareOptSpecificity . map representativeAtom $ ps
-      Unordered ps -> maximumBy compareOptSpecificity . map representativeAtom $ ps
-      Optional p   -> representativeAtom p
-      Repeated p   -> representativeAtom p
-      Atom a       -> a
+      Sequence []    -> AnyOption
+      Sequence (p:_) -> representativeAtom p
+      OneOf ps       -> maximumBy compareOptSpecificity . map representativeAtom $ ps
+      Unordered ps   -> maximumBy compareOptSpecificity . map representativeAtom $ ps
+      Optional p     -> representativeAtom p
+      Repeated p     -> representativeAtom p
+      Atom a         -> a
 
     maxLength :: OptPattern -> Int
     maxLength p = case p of
@@ -325,5 +329,5 @@ eagerSort pat = case pat of
         LongOption o  -> length o
         ShortOption _ -> 1
         Command c     -> length c
-        Argument a    -> 100
+        Argument _a   -> 100
         AnyOption     -> 0

@@ -1,0 +1,8 @@
+package docopt
+  ghc-options: -Werror
+
+prefer-oldest: True
+
+constraints:
+  aeson >= 1.4.4.0,
+  contravariant >= 1.5.2

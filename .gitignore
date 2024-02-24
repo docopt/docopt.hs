@@ -5,6 +5,11 @@
 dist
 .cabal-sandbox
 cabal.sandbox.config
+dist-newstyle/
+/cabal.project.local
+
+# GHC config
+.ghc.environment.*
 
 # Haskell compiled files
 *.hi

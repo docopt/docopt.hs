@@ -31,8 +31,7 @@ caseInsensitive :: String -> CharParser u String
 caseInsensitive = mapM (\c -> char (toLower c) <|> char (toUpper c))
 
 lookAhead_ :: CharParser u a -> CharParser u ()
-lookAhead_ p = do lookAhead p
-                  return ()
+lookAhead_ p = lookAhead p >> return ()
 
 isNotFollowedBy :: Show a => CharParser u a -> CharParser u Bool
 isNotFollowedBy p = option False (notFollowedBy p >> return True)

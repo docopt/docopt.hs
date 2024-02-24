@@ -1,0 +1,2 @@
+package docopt
+  ghc-options: -Werror

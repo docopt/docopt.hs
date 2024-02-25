@@ -35,3 +35,9 @@ constraints:
   ghc-prim installed,
   integer-gmp installed,
   template-haskell installed
+
+allow-newer:
+  containers,
+
+constraints:
+  containers == 0.7,

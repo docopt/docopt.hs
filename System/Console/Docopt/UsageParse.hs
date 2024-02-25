@@ -158,7 +158,7 @@ pUsagePatterns = do
 -- * Option Synonyms & Defaults Parsers
 
 -- | Succeeds only on the first line of an option explanation
---   (one whose first non-space character is '-')
+--   (one whose first non-space character is @\'-\'@)
 begOptionLine :: CharParser OptInfoMap String
 begOptionLine = inlineSpaces >> lookAhead (char '-') >> return "-"
 
@@ -256,8 +256,11 @@ canRepeat pat target =
 -- | Compare on specificity of parsers built from optA and optB,
 --   so we can be sure the parser tries the most-specific first, where possible.
 --   E.g.
---     LongOption "option" > ShortOption 'o' == True
---     Command "cmd" > Argument "arg"        == True
+--
+-- @
+-- LongOption "option" > ShortOption \'o\' == True
+-- Command "cmd" > Argument "arg"        == True
+-- @
 compareOptSpecificity :: Option -> Option -> Ordering
 compareOptSpecificity optA optB = case optA of
     LongOption a  -> case optB of

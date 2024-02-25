@@ -1,13 +1,25 @@
 name:                docopt
-version:             0.7.0.7
+version:             0.7.0.8
 synopsis:            A command-line interface parser that will make you smile
 description:         Docopt parses command-line interface usage text that adheres to a familiar syntax, and from it builds a command-line argument parser that will ensure your program is invoked correctly with the available options specified in the usage text. This allows the developer to write a usage text and get an argument parser for free.
 
 license:             MIT
 license-file:        LICENSE.txt
 author:              Ryan Artecona
-maintainer:          ryanartecona@gmail.com
+maintainer:          QBayLogic B.V. <devops@qbaylogic.com>
 copyright:           (c) 2013-2015 Ryan Artecona
+tested-with:
+  GHC == 8.0.2,
+  GHC == 8.2.2,
+  GHC == 8.4.4,
+  GHC == 8.6.5,
+  GHC == 8.8.4,
+  GHC == 8.10.7,
+  GHC == 9.0.2,
+  GHC == 9.2.8,
+  GHC == 9.4.7,
+  GHC == 9.6.3,
+  GHC == 9.8.1
 
 category:            Console
 
@@ -26,6 +38,11 @@ data-files:          test/testcases.docopt
 source-repository head
   type:       git
   location:   https://github.com/docopt/docopt.hs.git
+
+source-repository this
+  type:       git
+  location:   https://github.com/docopt/docopt.hs.git
+  tag:        v0.7.0.8
 
 library
   exposed-modules:    System.Console.Docopt.NoTH

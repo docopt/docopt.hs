@@ -107,7 +107,7 @@ notPresent = (not .) . isPresent
 -- > Usage:
 -- >   prog <required>
 --
---   then @getArg args (argument \'required\')@ is guaranteed to be a 'Just'.
+--   then @getArg args (argument "required")@ is guaranteed to be a 'Just'.
 getArg :: Arguments -> Option -> Maybe String
 getArg args opt =
   case opt `M.lookup` args of

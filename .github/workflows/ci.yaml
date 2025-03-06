@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         # TODO: "8.0", "8.2", "8.4", "8.6"
-        ghc: ["8.8", "8.10", "9.0", "9.2", "9.4", "9.6", "9.8"]
+        ghc: ["8.8", "8.10", "9.0", "9.2", "9.4", "9.6", "9.8", "9.10"]
       fail-fast: false
     steps:
       - name: Checkout
@@ -86,15 +86,16 @@ jobs:
           - "9.0.2"
           - "9.2.8"
           - "9.4.8"
-          - "9.6.5"
-          - "9.8.2"
+          - "9.6.6"
+          - "9.8.4"
           - "9.10.1"
+          - "9.12.1"
         project-variant: [""]
         include:
           - ghc: 8.0.2
             project-variant: -lower
-          # - ghc: 9.10.1
-          #   project-variant: -upper
+          - ghc: 9.12.1
+            project-variant: -upper
 
       fail-fast: false
     steps:

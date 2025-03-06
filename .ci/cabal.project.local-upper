@@ -40,4 +40,4 @@ allow-newer:
   containers,
 
 constraints:
-  containers == 0.7,
+  containers == 0.8,

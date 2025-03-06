@@ -18,9 +18,10 @@ tested-with:
   GHC == 9.0.2,
   GHC == 9.2.8,
   GHC == 9.4.8,
-  GHC == 9.6.5,
-  GHC == 9.8.2,
-  GHC == 9.10.1
+  GHC == 9.6.6,
+  GHC == 9.8.4,
+  GHC == 9.10.1,
+  GHC == 9.12.1
 
 category:            Console
 
@@ -43,7 +44,7 @@ source-repository head
 source-repository this
   type:       git
   location:   https://github.com/docopt/docopt.hs.git
-  tag:        v0.7.0.8+r1
+  tag:        v0.7.0.8+r2
 
 library
   exposed-modules:    System.Console.Docopt.NoTH
@@ -60,8 +61,8 @@ library
 
   build-depends:      base >= 4.9 && < 5.0,
                       parsec >= 3.1.14 && < 3.2,
-                      containers >= 0.6.2 && < 0.8,
-                      template-haskell >= 2.11.0 && < 2.23
+                      containers >= 0.6.2 && < 0.9,
+                      template-haskell >= 2.11.0 && < 2.24
 
   ghc-options:        -Wall -Wno-name-shadowing
 
